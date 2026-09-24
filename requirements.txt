@@ -5,3 +5,5 @@ matplotlib
 opencv-python-headless
 numpy
 pillow
+bcrypt
+sqlalchemy

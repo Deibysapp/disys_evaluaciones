@@ -6,16 +6,14 @@ from core.database import SessionLocal, Usuario, Evaluacion, verify_password, ge
 from core.profiles_data import CATALOGO_PERFILES
 from core.test_printer import generar_cuadernillo_test_pdf
 from core.questions_bank import BANCO_PREGUNTAS
-from core.ai_evaluator import analizar_test_con_gemini
+from core.ai_evaluator import peritar_evaluacion_con_gemini
 
-# Configuración de Página e Identidad Visual
 st.set_page_config(
     page_title="DiSys 2026 - Plataforma de Selección Técnica",
     page_icon="assets/logo.png" if os.path.exists("assets/logo.png") else "🏢",
     layout="wide"
 )
 
-# Estilos Corporativos DiSys
 st.markdown("""
 <style>
     :root {
@@ -37,17 +35,8 @@ st.markdown("""
         font-weight: bold !important;
         border-radius: 6px !important;
         border: none !important;
-        height: 52px;
+        height: 50px;
         font-size: 16px !important;
-    }
-    .omr-summary {
-        background-color: #F1F5F9;
-        border-left: 4px solid #0E1E38;
-        padding: 12px 16px;
-        border-radius: 6px;
-        font-family: monospace;
-        font-size: 13px;
-        color: #1E293B;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -99,12 +88,10 @@ if not st.session_state.authenticated:
             st.caption("Tecnología para la distribución eficiente")
             
         st.markdown("### Acceso al Sistema de Auditoría y Evaluación")
-        
         with st.form("form_login"):
             u_input = st.text_input("Usuario")
             p_input = st.text_input("Contraseña", type="password")
             btn_login = st.form_submit_button("INGRESAR AL SISTEMA")
-            
             if btn_login:
                 if login(u_input, p_input):
                     st.success("Acceso autorizado.")
@@ -123,7 +110,7 @@ with st.sidebar:
     st.markdown(f"**Rol:** `{st.session_state.user['rol']}` | **Sede:** {st.session_state.user['sucursal']}")
     st.markdown("---")
     
-    opciones_menu = ["Nueva Evaluación (Escáner PDF)", "Historial de Expedientes"]
+    opciones_menu = ["Nueva Evaluación (Auditoría Pericial)", "Historial de Expedientes"]
     if st.session_state.user["rol"] == "MASTER":
         opciones_menu.append("Panel Master (Gestión de Usuarios)")
         
@@ -133,13 +120,13 @@ with st.sidebar:
         logout()
 
 # -------------------------------------------------------------
-# NUEVA EVALUACIÓN (ANÁLISIS PERICIAL CON INTELIGENCIA ARTIFICIAL)
+# NUEVA EVALUACIÓN (PERITAJE DINÁMICO UNIVERSAL CON IA)
 # -------------------------------------------------------------
-if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
+if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
     st.markdown("""
     <div class="main-header">
-        <h2 style='margin:0;'>Carga y Procesamiento de Test con Inteligencia Pericial</h2>
-        <p style='margin:0; font-size:13px; opacity:0.9;'>Adjunte el PDF escaneado con las marcas del aspirante para extraer respuestas y redactar el informe técnico oficial</p>
+        <h2 style='margin:0;'>Auditoría Pericial Psicotécnica con Inteligencia Artificial</h2>
+        <p style='margin:0; font-size:13px; opacity:0.9;'>Selecciona el perfil, registra las opciones marcadas por el postulante y genera el dictamen oficial DiSys</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -151,7 +138,6 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
             candidato_cedula = st.text_input("Cédula de Identidad (ej. V-12345678)")
         with c2:
             perfiles_keys = sorted(list(BANCO_PREGUNTAS.keys()))
-
             def formatear_perfil(k):
                 datos = BANCO_PREGUNTAS.get(k, {})
                 cod = datos.get("codigo", "")
@@ -159,22 +145,19 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
                 nombre_limpio = tit.replace("EVALUACIÓN PSICOTÉCNICA SITUACIONAL EN ", "").replace("EVALUACIÓN PSICOTÉCNICA COMERCIAL EN ", "").strip()
                 return f"{nombre_limpio.title()} ({cod})"
 
-            perfil_sel = st.selectbox(
-                "Seleccione Perfil Organizacional:",
-                perfiles_keys,
-                format_func=formatear_perfil
-            )
+            perfil_sel = st.selectbox("Seleccione Perfil Organizacional:", perfiles_keys, format_func=formatear_perfil)
             sucursal_eval = st.text_input("Sede / Sucursal", value=st.session_state.user["sucursal"])
         with c3:
             fecha_eval = st.date_input("Fecha de Aplicación", datetime.now())
             evaluador_nom = st.text_input("Evaluador Responsable", value=st.session_state.user["nombre"])
 
         cfg_perfil = CATALOGO_PERFILES.get(perfil_sel, {"nombre": perfil_sel, "departamento": "GENERAL"})
+        preguntas_actuales = BANCO_PREGUNTAS.get(perfil_sel, {}).get("preguntas", [])
 
         st.markdown("---")
         col_dl1, col_dl2 = st.columns([2, 1])
         with col_dl1:
-            st.info(f"Instrumento seleccionado: **{cfg_perfil['nombre']}** ({cfg_perfil.get('departamento', 'GENERAL')})")
+            st.info(f"Instrumento seleccionado: **{cfg_perfil['nombre']}** ({len(preguntas_actuales)} reactivos cargados)")
         with col_dl2:
             pdf_cuadernillo = generar_cuadernillo_test_pdf(perfil_sel, cfg_perfil['nombre'])
             st.download_button(
@@ -184,66 +167,93 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
                 mime="application/pdf"
             )
 
-    # 2. Carga del PDF Escaneado y Análisis con IA
-    with st.expander("2. CARGA DEL TEST ESCANEADO Y AUDITORÍA PERICIAL", expanded=True):
-        archivo_pdf = st.file_uploader(
-            "Seleccione o arrastre el archivo PDF escaneado con las respuestas marcadas:",
-            type=["pdf"],
-            help="Suba el documento digitalizado en escáner o fotografía exportada a PDF."
-        )
+    # 2. Captura Rápida de Respuestas del Aspirante
+    with st.expander("2. RESPUESTAS MARCADAS POR EL CANDIDATO (1 al 30)", expanded=True):
+        st.caption("Seleccione las alternativas marcadas por el aspirante en su hoja de examen:")
+        
+        # Grilla organizada de 5 columnas para marcar en 15 segundos
+        respuestas_ingresadas = {}
+        cols = st.columns(5)
+        total_items = len(preguntas_actuales) if preguntas_actuales else 30
+        
+        for i in range(1, total_items + 1):
+            col_idx = (i - 1) % 5
+            with cols[col_idx]:
+                opcion = st.selectbox(
+                    f"Ítem {i:02d}",
+                    ["A", "B", "C", "D"],
+                    key=f"item_{i}",
+                    index=0
+                )
+                respuestas_ingresadas[i] = opcion
 
-        st.markdown("<br/>", unsafe_allow_html=True)
-        if st.button("ANALIZAR TEST ESCANEADO CON IA", use_container_width=True):
-            if not candidato_nombre or not candidato_cedula:
-                st.error("Debe ingresar el nombre y la cédula de identidad del aspirante en la Sección 1.")
-            elif archivo_pdf is None:
-                st.error("Debe adjuntar el archivo PDF escaneado del aspirante.")
-            else:
-                with st.spinner("Leyendo respuestas marcadas y generando informe psicotécnico pericial con IA..."):
+        # Tira resumen compacta
+        tira_txt = " | ".join([f"<b>{k:02d}:</b> {v}" for k, v in respuestas_ingresadas.items()])
+        st.markdown(f"<div style='background-color:#F1F5F9; padding:10px; border-radius:5px; font-family:monospace; margin-top:10px;'><b>Tira de respuestas:</b> {tira_txt}</div>", unsafe_allow_html=True)
+
+    # Botón de Peritaje
+    st.markdown("<br/>", unsafe_allow_html=True)
+    if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
+        if not candidato_nombre or not candidato_cedula:
+            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
+        else:
+            with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
+                try:
+                    datos_aspirante = {
+                        "nombre": candidato_nombre,
+                        "cedula": candidato_cedula,
+                        "cargo": cfg_perfil["nombre"],
+                        "sucursal": sucursal_eval,
+                        "fecha": fecha_eval.strftime("%d/%m/%Y"),
+                        "evaluador": evaluador_nom
+                    }
+
+                    informe_resultado = peritar_evaluacion_con_gemini(
+                        cargo=cfg_perfil["nombre"],
+                        datos_candidato=datos_aspirante,
+                        respuestas_marcadas=respuestas_ingresadas,
+                        preguntas_contexto=preguntas_actuales
+                    )
+
+                    codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+                    # Guardar registro en BD
+                    db = SessionLocal()
                     try:
-                        bytes_pdf = archivo_pdf.read()
-                        informe_generado = analizar_test_con_gemini(bytes_pdf)
-
-                        codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-
-                        # Guardar en base de datos
-                        db = SessionLocal()
-                        try:
-                            nueva_eval = Evaluacion(
-                                codigo_expediente=codigo_exp,
-                                candidato_nombre=candidato_nombre,
-                                candidato_cedula=candidato_cedula,
-                                perfil_evaluado=cfg_perfil["nombre"],
-                                evaluador_username=st.session_state.user["username"],
-                                sucursal=sucursal_eval,
-                                puntaje_fase1=100.0,
-                                puntaje_fase2=0.0,
-                                puntaje_total_ponderado=100.0,
-                                sinceridad_distorsion=0,
-                                alerta_roja=False,
-                                detalle_alerta="Sin anomalías críticas detectadas por peritaje inteligente.",
-                                dictamen_final="Evaluación Completada por IA"
-                            )
-                            db.add(nueva_eval)
-                            db.commit()
-                        finally:
-                            db.close()
-
-                        st.success("Análisis pericial completado exitosamente.")
-                        st.markdown("---")
-                        st.markdown(informe_generado)
-
-                        # Botón para descargar el dictamen completo
-                        st.download_button(
-                            label="📥 DESCARGAR DICTAMEN PERICIAL (TEXTO)",
-                            data=informe_generado,
-                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
-                            mime="text/plain",
-                            use_container_width=True
+                        nueva_eval = Evaluacion(
+                            codigo_expediente=codigo_exp,
+                            candidato_nombre=candidato_nombre,
+                            candidato_cedula=candidato_cedula,
+                            perfil_evaluado=cfg_perfil["nombre"],
+                            evaluador_username=st.session_state.user["username"],
+                            sucursal=sucursal_eval,
+                            puntaje_fase1=100.0,
+                            puntaje_fase2=0.0,
+                            puntaje_total_ponderado=100.0,
+                            sinceridad_distorsion=0,
+                            alerta_roja=False,
+                            detalle_alerta="Peritaje dinámico completado.",
+                            dictamen_final="Auditado por IA"
                         )
+                        db.add(nueva_eval)
+                        db.commit()
+                    finally:
+                        db.close()
 
-                    except Exception as e:
-                        st.error(f"Error procesando la evaluación: {str(e)}")
+                    st.success("Dictamen pericial emitido con éxito.")
+                    st.markdown("---")
+                    st.markdown(informe_resultado)
+
+                    st.download_button(
+                        label="📥 DESCARGAR INFORME PERICIAL OFICIAL (.TXT)",
+                        data=informe_resultado,
+                        file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
+
+                except Exception as e:
+                    st.error(f"Error procesando el peritaje: {str(e)}")
 
 # -------------------------------------------------------------
 # HISTORIAL

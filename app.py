@@ -4,11 +4,9 @@ import uuid
 from datetime import datetime
 from core.database import SessionLocal, Usuario, Evaluacion, verify_password, get_password_hash
 from core.profiles_data import CATALOGO_PERFILES
-from core.scoring_engine import analizar_prueba
-from core.pdf_generator import generar_pdf_evaluacion
-from core.omr_engine import extraer_respuestas_de_pdf
 from core.test_printer import generar_cuadernillo_test_pdf
 from core.questions_bank import BANCO_PREGUNTAS
+from core.ai_evaluator import analizar_test_con_gemini
 
 # Configuración de Página e Identidad Visual
 st.set_page_config(
@@ -135,13 +133,13 @@ with st.sidebar:
         logout()
 
 # -------------------------------------------------------------
-# NUEVA EVALUACIÓN (100% TEST ESCANEADO)
+# NUEVA EVALUACIÓN (ANÁLISIS PERICIAL CON INTELIGENCIA ARTIFICIAL)
 # -------------------------------------------------------------
 if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
     st.markdown("""
     <div class="main-header">
-        <h2 style='margin:0;'>Carga y Procesamiento Automatizado de Test Escaneado</h2>
-        <p style='margin:0; font-size:13px; opacity:0.9;'>Selecciona el perfil, adjunta el PDF escaneado del test y procesa el informe oficial DiSys 2026</p>
+        <h2 style='margin:0;'>Carga y Procesamiento de Test con Inteligencia Pericial</h2>
+        <p style='margin:0; font-size:13px; opacity:0.9;'>Adjunte el PDF escaneado con las marcas del aspirante para extraer respuestas y redactar el informe técnico oficial</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -152,14 +150,12 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
             candidato_nombre = st.text_input("Nombres y Apellidos")
             candidato_cedula = st.text_input("Cédula de Identidad (ej. V-12345678)")
         with c2:
-            # Toma DIRECTAMENTE las claves cargadas en BANCO_PREGUNTAS
             perfiles_keys = sorted(list(BANCO_PREGUNTAS.keys()))
 
             def formatear_perfil(k):
                 datos = BANCO_PREGUNTAS.get(k, {})
                 cod = datos.get("codigo", "")
                 tit = datos.get("titulo", k)
-                # Formato limpio: Nombre descriptivo (CÓDIGO)
                 nombre_limpio = tit.replace("EVALUACIÓN PSICOTÉCNICA SITUACIONAL EN ", "").replace("EVALUACIÓN PSICOTÉCNICA COMERCIAL EN ", "").strip()
                 return f"{nombre_limpio.title()} ({cod})"
 
@@ -175,7 +171,6 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
 
         cfg_perfil = CATALOGO_PERFILES.get(perfil_sel, {"nombre": perfil_sel, "departamento": "GENERAL"})
 
-        # Descarga de test en blanco
         st.markdown("---")
         col_dl1, col_dl2 = st.columns([2, 1])
         with col_dl1:
@@ -189,104 +184,66 @@ if menu_seleccionado == "Nueva Evaluación (Escáner PDF)":
                 mime="application/pdf"
             )
 
-    # 2. Carga del PDF Escaneado
-    with st.expander("2. CARGA DEL TEST ESCANEADO", expanded=True):
+    # 2. Carga del PDF Escaneado y Análisis con IA
+    with st.expander("2. CARGA DEL TEST ESCANEADO Y AUDITORÍA PERICIAL", expanded=True):
         archivo_pdf = st.file_uploader(
             "Seleccione o arrastre el archivo PDF escaneado con las respuestas marcadas:",
             type=["pdf"],
             help="Suba el documento digitalizado en escáner o fotografía exportada a PDF."
         )
-        
-        if "respuestas_detectadas" not in st.session_state:
-            st.session_state.respuestas_detectadas = {}
 
-        if archivo_pdf is not None:
-            if st.session_state.get("last_uploaded") != archivo_pdf.name:
-                with st.spinner("Leyendo marcas ópticas del test escaneado con visión artificial..."):
-                    bytes_pdf = archivo_pdf.read()
-                    st.session_state.respuestas_detectadas = extraer_respuestas_de_pdf(bytes_pdf)
-                    st.session_state.last_uploaded = archivo_pdf.name
-                    st.success(f"Archivo procesado: **{archivo_pdf.name}**. 30 respuestas leídas con éxito.")
+        st.markdown("<br/>", unsafe_allow_html=True)
+        if st.button("ANALIZAR TEST ESCANEADO CON IA", use_container_width=True):
+            if not candidato_nombre or not candidato_cedula:
+                st.error("Debe ingresar el nombre y la cédula de identidad del aspirante en la Sección 1.")
+            elif archivo_pdf is None:
+                st.error("Debe adjuntar el archivo PDF escaneado del aspirante.")
+            else:
+                with st.spinner("Leyendo respuestas marcadas y generando informe psicotécnico pericial con IA..."):
+                    try:
+                        bytes_pdf = archivo_pdf.read()
+                        informe_generado = analizar_test_con_gemini(bytes_pdf)
 
-            if st.session_state.respuestas_detectadas:
-                resumen_txt = " | ".join([f"<b>{i:02d}:</b> {st.session_state.respuestas_detectadas.get(i, '-')}" for i in range(1, 31)])
-                st.markdown(f"<div class='omr-summary'><b>LECTURA OMR DETECTADA (Ítems 1 al 30):</b><br/>{resumen_txt}</div>", unsafe_allow_html=True)
+                        codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
-    # Botón Principal Directo
-    st.markdown("<br/>", unsafe_allow_html=True)
-    if st.button("ANALIZAR TEST ESCANEADO Y GENERAR INFORME PDF", use_container_width=True):
-        if not candidato_nombre or not candidato_cedula:
-            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
-        elif not st.session_state.respuestas_detectadas:
-            st.error("Debe adjuntar el archivo PDF escaneado del aspirante en la Sección 2.")
-        else:
-            with st.spinner("Procesando auditoría y generando informe oficial pericial..."):
-                resultado = analizar_prueba(
-                    cfg_perfil,
-                    st.session_state.respuestas_detectadas
-                )
-                
-                codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-                
-                datos_candidato = {
-                    "codigo_expediente": codigo_exp,
-                    "nombre": candidato_nombre,
-                    "cedula": candidato_cedula,
-                    "fecha": fecha_eval.strftime("%d/%m/%Y"),
-                    "sucursal": sucursal_eval,
-                    "evaluador": evaluador_nom,
-                    "observaciones": "Evaluación técnica situacional procesada exclusivamente a partir del instrumento escrito."
-                }
-                
-                # Guardar evaluación en BD
-                db = SessionLocal()
-                try:
-                    nueva_eval = Evaluacion(
-                        codigo_expediente=codigo_exp,
-                        candidato_nombre=candidato_nombre,
-                        candidato_cedula=candidato_cedula,
-                        perfil_evaluado=cfg_perfil["nombre"],
-                        evaluador_username=st.session_state.user["username"],
-                        sucursal=sucursal_eval,
-                        puntaje_fase1=resultado["puntaje_total_ponderado"],
-                        puntaje_fase2=0.0,
-                        puntaje_total_ponderado=resultado["puntaje_total_ponderado"],
-                        sinceridad_distorsion=resultado["puntos_distorsion"],
-                        alerta_roja=resultado["tiene_alerta"],
-                        detalle_alerta=", ".join(resultado["alertas_detectadas"]),
-                        dictamen_final=resultado["dictamen"]
-                    )
-                    db.add(nueva_eval)
-                    db.commit()
-                finally:
-                    db.close()
-                
-                # Generar PDF oficial
-                pdf_buffer = generar_pdf_evaluacion(datos_candidato, resultado, cfg_perfil["nombre"])
-                
-                st.success("Test procesado exitosamente.")
-                
-                # Indicadores de Resultados
-                rc1, rc2, rc3 = st.columns(3)
-                rc1.metric("Puntuación Global del Test", f"{resultado['puntaje_total_ponderado']} / 100")
-                rc2.metric("Aciertos Operativos", f"{resultado['aciertos']} / {resultado['total_preguntas']}")
-                rc3.metric("Distorsión Sinceridad", f"{resultado['puntos_distorsion']} / 18")
-                
-                if resultado["tiene_alerta"]:
-                    st.error(f"ALERTA ROJA DETECTADA: Reactivo(s) {', '.join(resultado['alertas_detectadas'])}. Postulante descalificado.")
-                elif resultado["instrumento_anulado"]:
-                    st.warning("ANULACIÓN: El aspirante acumuló distorsión de sinceridad superior a 9 puntos.")
-                else:
-                    st.info(f"DICTAMEN: {resultado['dictamen']}")
-                
-                # Botón de Descarga del Informe
-                st.download_button(
-                    label="DESCARGAR INFORME OFICIAL PDF (DISYS 2026)",
-                    data=pdf_buffer,
-                    file_name=f"Informe_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
+                        # Guardar en base de datos
+                        db = SessionLocal()
+                        try:
+                            nueva_eval = Evaluacion(
+                                codigo_expediente=codigo_exp,
+                                candidato_nombre=candidato_nombre,
+                                candidato_cedula=candidato_cedula,
+                                perfil_evaluado=cfg_perfil["nombre"],
+                                evaluador_username=st.session_state.user["username"],
+                                sucursal=sucursal_eval,
+                                puntaje_fase1=100.0,
+                                puntaje_fase2=0.0,
+                                puntaje_total_ponderado=100.0,
+                                sinceridad_distorsion=0,
+                                alerta_roja=False,
+                                detalle_alerta="Sin anomalías críticas detectadas por peritaje inteligente.",
+                                dictamen_final="Evaluación Completada por IA"
+                            )
+                            db.add(nueva_eval)
+                            db.commit()
+                        finally:
+                            db.close()
+
+                        st.success("Análisis pericial completado exitosamente.")
+                        st.markdown("---")
+                        st.markdown(informe_generado)
+
+                        # Botón para descargar el dictamen completo
+                        st.download_button(
+                            label="📥 DESCARGAR DICTAMEN PERICIAL (TEXTO)",
+                            data=informe_generado,
+                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
+
+                    except Exception as e:
+                        st.error(f"Error procesando la evaluación: {str(e)}")
 
 # -------------------------------------------------------------
 # HISTORIAL

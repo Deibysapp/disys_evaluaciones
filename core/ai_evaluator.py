@@ -50,7 +50,7 @@ def analizar_test_con_gemini(pdf_bytes: bytes) -> str:
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-pro",
+        model="gemini-1.5-flash",
         contents=[
             types.Part.from_bytes(
                 data=pdf_bytes,

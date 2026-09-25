@@ -66,7 +66,7 @@ def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.8-flash",
         contents=prompt
     )
     return response.text

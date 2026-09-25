@@ -1,12 +1,14 @@
 import streamlit as st
 import os
 import uuid
+import generar_pdf_dictamen_ia
 from datetime import datetime
 from core.database import SessionLocal, Usuario, Evaluacion, verify_password, get_password_hash
 from core.profiles_data import CATALOGO_PERFILES
 from core.test_printer import generar_cuadernillo_test_pdf
 from core.questions_bank import BANCO_PREGUNTAS
 from core.ai_evaluator import peritar_evaluacion_con_gemini
+from core.pdf_generator
 
 st.set_page_config(
     page_title="DiSys 2026 - Plataforma de Selección Técnica",
@@ -244,13 +246,30 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                     st.markdown("---")
                     st.markdown(informe_resultado)
 
-                    st.download_button(
-                        label="📥 DESCARGAR INFORME PERICIAL OFICIAL (.TXT)",
-                        data=informe_resultado,
-                        file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
+                    # Generar PDF del dictamen pericial
+                    pdf_bytes_dictamen = generar_pdf_dictamen_ia(
+                        datos_candidato=datos_aspirante,
+                        dictamen_texto=informe_resultado,
+                        cargo=cfg_perfil["nombre"]
                     )
+
+                    col_btn1, col_btn2 = st.columns(2)
+                    with col_btn1:
+                        st.download_button(
+                            label="📄 DESCARGAR DICTAMEN PERICIAL OFICIAL (PDF)",
+                            data=pdf_bytes_dictamen,
+                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                    with col_btn2:
+                        st.download_button(
+                            label="📥 DESCARGAR INFORME (.TXT)",
+                            data=informe_resultado,
+                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
 
                 except Exception as e:
                     st.error(f"Error procesando el peritaje: {str(e)}")

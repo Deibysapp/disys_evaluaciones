@@ -273,24 +273,26 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                     st.error(f"Error procesando el peritaje: {str(e)}")
 
 # -------------------------------------------------------------
-# HISTORIAL
+# HISTORIAL Y GESTIÓN DE EXPEDIENTES
 # -------------------------------------------------------------
 elif menu_seleccionado == "Historial de Expedientes":
     st.markdown("""
     <div class="main-header">
         <h2 style='margin:0;'>Historial y Auditoría de Expedientes Evaluados</h2>
-        <p style='margin:0; font-size:13px; opacity:0.9;'>Consulta de evaluaciones procesadas por sede</p>
+        <p style='margin:0; font-size:13px; opacity:0.9;'>Consulta y depuración de evaluaciones registradas</p>
     </div>
     """, unsafe_allow_html=True)
     
     db = SessionLocal()
     try:
+        # Filtrado por sucursal si no es MASTER
         query = db.query(Evaluacion)
         if st.session_state.user["rol"] != "MASTER":
             query = query.filter(Evaluacion.sucursal == st.session_state.user["sucursal"])
         registros = query.order_by(Evaluacion.fecha_evaluacion.desc()).all()
         
         if registros:
+            # 1. Tabla informativa
             tabla = []
             for r in registros:
                 tabla.append({
@@ -304,6 +306,35 @@ elif menu_seleccionado == "Historial de Expedientes":
                     "Evaluador": r.evaluador_username
                 })
             st.dataframe(tabla, use_container_width=True)
+
+            # 2. Módulo exclusivo para MASTER: Depurar expedientes de prueba
+            if st.session_state.user["rol"] == "MASTER":
+                st.markdown("---")
+                with st.expander("🛠️ PANEL DEPURADOR DE EXPEDIENTES (SOLO MASTER)", expanded=False):
+                    st.caption("Selecciona uno o más expedientes de prueba para eliminarlos permanentemente de la base de datos:")
+                    
+                    opciones_exp = {
+                        f"{r.codigo_expediente} | {r.candidato_nombre} ({r.perfil_evaluado}) - {r.fecha_evaluacion.strftime('%d/%m/%Y')}": r.id
+                        for r in registros
+                    }
+                    
+                    expedientes_a_borrar = st.multiselect(
+                        "Seleccionar expedientes a depurar:",
+                        options=list(opciones_exp.keys())
+                    )
+                    
+                    col_del1, col_del2 = st.columns([1, 2])
+                    with col_del1:
+                        if st.button("🗑️ ELIMINAR EXPEDIENTES SELECCIONADOS", type="primary"):
+                            if not expedientes_a_borrar:
+                                st.warning("Debes seleccionar al menos un expediente.")
+                            else:
+                                ids_borrar = [opciones_exp[k] for k in expedientes_a_borrar]
+                                db.query(Evaluacion).filter(Evaluacion.id.in_(ids_borrar)).delete(synchronize_session=False)
+                                db.commit()
+                                st.success(f"Se eliminaron {len(ids_borrar)} expediente(s) correctamente.")
+                                st.rerun()
+
         else:
             st.info("No hay evaluaciones registradas en el historial.")
     finally:

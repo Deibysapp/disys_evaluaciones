@@ -1,15 +1,13 @@
 import streamlit as st
 import os
 import uuid
-import generar_pdf_dictamen_ia
 from datetime import datetime
 from core.database import SessionLocal, Usuario, Evaluacion, verify_password, get_password_hash
 from core.profiles_data import CATALOGO_PERFILES
 from core.test_printer import generar_cuadernillo_test_pdf
 from core.questions_bank import BANCO_PREGUNTAS
 from core.ai_evaluator import peritar_evaluacion_con_gemini
-from core.pdf_generator
-
+from core.pdf_generator import generar_pdf_dictamen_ia
 st.set_page_config(
     page_title="DiSys 2026 - Plataforma de Selección Técnica",
     page_icon="assets/logo.png" if os.path.exists("assets/logo.png") else "🏢",

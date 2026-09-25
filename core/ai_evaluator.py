@@ -49,7 +49,7 @@ def analizar_test_con_gemini(pdf_bytes: bytes) -> str:
        - Recomendación pericial de contratación (Apto / No Apto) y conclusiones ejecutivas.
     """
 
-   response = client.models.generate_content(
+    response = client.models.generate_content(
         model="gemini-3.8-flash",
         contents=[
             types.Part.from_bytes(

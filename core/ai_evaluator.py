@@ -8,25 +8,33 @@ def obtener_cliente_gemini():
         raise ValueError("No se encontró la clave GEMINI_API_KEY en st.secrets ni en el entorno.")
     return genai.Client(api_key=api_key)
 
-def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_marcadas: dict, preguntas_contexto: list) -> str:
-    """
-    Analiza cualquier cargo de forma dinámica enviando un payload liviano de texto.
-    Elimina por completo el error 503 por subida de archivos pesados.
-    """
+def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_marcadas: dict, preguntas_contexto) -> str:
     client = obtener_cliente_gemini()
 
-    # Formatear el cuestionario con las preguntas y las opciones marcadas
+    # Formateo universal: soporta diccionarios {1: {...}} o listas [{...}]
     detalle_cuestionario = []
-    for num, item in enumerate(preguntas_contexto, start=1):
-        pregunta_txt = item.get("pregunta", item.get("enunciado", f"Reactivo {num}"))
-        opciones_txt = item.get("opciones", {})
-        resp_candidato = respuestas_marcadas.get(num, "No contestada")
+    
+    if isinstance(preguntas_contexto, dict):
+        items_preguntas = [(k, v) for k, v in sorted(preguntas_contexto.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0]))]
+    elif isinstance(preguntas_contexto, list):
+        items_preguntas = [(idx + 1, item) for idx, item in enumerate(preguntas_contexto)]
+    else:
+        items_preguntas = [(i, {}) for i in range(1, 31)]
+
+    for num, item in items_preguntas:
+        resp_candidato = respuestas_marcadas.get(int(num) if str(num).isdigit() else num, "No contestada")
         
-        texto_item = f"Pregunta {num}: {pregunta_txt}\n"
-        if isinstance(opciones_txt, dict):
-            for letra, desc in opciones_txt.items():
-                texto_item += f"  [{letra}] {desc}\n"
-        texto_item += f"  -> OPCIÓN MARCADA POR EL POSTULANTE: {resp_candidato}\n"
+        if isinstance(item, dict):
+            pregunta_txt = item.get("pregunta", item.get("enunciado", f"Situación operativa {num}"))
+            opciones_txt = item.get("opciones", {})
+            texto_item = f"Pregunta {num}: {pregunta_txt}\n"
+            if isinstance(opciones_txt, dict):
+                for letra, desc in opciones_txt.items():
+                    texto_item += f"  [{letra}] {desc}\n"
+        else:
+            texto_item = f"Pregunta {num}: {item}\n"
+            
+        texto_item += f"  -> RESPUESTA MARCADA: {resp_candidato}\n"
         detalle_cuestionario.append(texto_item)
 
     bloque_cuestionario = "\n".join(detalle_cuestionario)
@@ -47,10 +55,10 @@ def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_
     {bloque_cuestionario}
     
     INSTRUCCIONES PERICIALES:
-    1. Evalúa la idoneidad situacional de cada respuesta basándote estrictamente en las responsabilidades operativas, control interno, manejo de datos o inventario del cargo: {cargo}.
-    2. Identifica los reactivos de sinceridad y autocrítica (L-Scale) y dictamina si el postulante muestra apertura honesta o deseabilidad social fingida.
-    3. Detecta alertas críticas, riesgos operacionales o faltas éticas si las hubiere.
-    4. Emite el informe pericial estructurado:
+    1. Evalúa la idoneidad de cada respuesta basándote estrictamente en las responsabilidades operativas y éticas del cargo: {cargo}.
+    2. Identifica los reactivos de sinceridad/autocrítica (L-Scale) y dictamina si el postulante muestra autenticidad o deseabilidad social manipulada.
+    3. Detecta riesgos operacionales o faltas éticas si las hubiere.
+    4. Estructura el informe pericial:
        - Resumen Cuantitativo (% de efectividad situacional y conteo de aciertos idóneos).
        - Desglose por Dimensiones Competenciales relevantes al cargo evaluado.
        - Auditoría de la Escala de Sinceridad (L-Scale).

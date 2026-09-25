@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 from google import genai
 
@@ -11,9 +12,8 @@ def obtener_cliente_gemini():
 def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_marcadas: dict, preguntas_contexto) -> str:
     client = obtener_cliente_gemini()
 
-    # Formateo universal: soporta diccionarios {1: {...}} o listas [{...}]
+    # Formateo de cuestionario universal
     detalle_cuestionario = []
-    
     if isinstance(preguntas_contexto, dict):
         items_preguntas = [(k, v) for k, v in sorted(preguntas_contexto.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else str(x[0]))]
     elif isinstance(preguntas_contexto, list):
@@ -23,7 +23,6 @@ def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_
 
     for num, item in items_preguntas:
         resp_candidato = respuestas_marcadas.get(int(num) if str(num).isdigit() else num, "No contestada")
-        
         if isinstance(item, dict):
             pregunta_txt = item.get("pregunta", item.get("enunciado", f"Situación operativa {num}"))
             opciones_txt = item.get("opciones", {})
@@ -33,7 +32,6 @@ def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_
                     texto_item += f"  [{letra}] {desc}\n"
         else:
             texto_item = f"Pregunta {num}: {item}\n"
-            
         texto_item += f"  -> RESPUESTA MARCADA: {resp_candidato}\n"
         detalle_cuestionario.append(texto_item)
 
@@ -65,8 +63,25 @@ def peritar_evaluacion_con_gemini(cargo: str, datos_candidato: dict, respuestas_
        - Dictamen Ejecutivo y Recomendación Definitiva de Contratación (Apto Sobresaliente, Apto con Observaciones o No Apto).
     """
 
-    response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=prompt
-    )
-    return response.text
+    # Obtener modelos disponibles con soporte de generación
+    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
+    try:
+        disponibles = [m.name.replace("models/", "") for m in client.models.list()]
+        candidatos = [m for m in disponibles if "flash" in m or "pro" in m]
+        if candidatos:
+            modelos_a_probar = candidatos + [m for m in modelos_a_probar if m not in candidatos]
+    except Exception:
+        pass
+
+    ultimo_error = None
+    for mod in modelos_a_probar:
+        for _ in range(2):
+            try:
+                res = client.models.generate_content(model=mod, contents=prompt)
+                if res.text:
+                    return res.text
+            except Exception as e:
+                ultimo_error = e
+                time.sleep(1.5)
+
+    raise RuntimeError(f"Servidores saturados momentáneamente. Detalle: {ultimo_error}")

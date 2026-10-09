@@ -1,6 +1,6 @@
 import os
 import shutil
-from sqlalchemy import create_engine, Column, Integer, String, Float
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 import bcrypt
 
@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(BASE_DIR)
 LOCAL_DB = os.path.join(REPO_ROOT, "disys_system.db")
 
-# En la nube (Linux), trabajamos sobre /tmp para garantizar permisos completos de escritura
+# En la nube (Linux/Streamlit Cloud), usamos /tmp para permisos de lectura y escritura
 if os.name != "nt":
     DB_PATH = "/tmp/disys_system.db"
     if not os.path.exists(DB_PATH) and os.path.exists(LOCAL_DB):
@@ -36,6 +36,7 @@ class Usuario(Base):
     username = Column(String, unique=True, index=True)
     password_hash = Column(String)
     rol = Column(String)
+    activo = Column(Boolean, default=True)
 
 class Evaluacion(Base):
     __tablename__ = "evaluaciones"

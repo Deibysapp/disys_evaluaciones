@@ -1,10 +1,24 @@
 import os
+import shutil
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base
 import bcrypt
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "disys_system.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(BASE_DIR)
+LOCAL_DB = os.path.join(REPO_ROOT, "disys_system.db")
+
+# En la nube (Linux), trabajamos sobre /tmp para garantizar permisos completos de escritura
+if os.name != "nt":
+    DB_PATH = "/tmp/disys_system.db"
+    if not os.path.exists(DB_PATH) and os.path.exists(LOCAL_DB):
+        shutil.copy2(LOCAL_DB, DB_PATH)
+        try:
+            os.chmod(DB_PATH, 0o666)
+        except Exception:
+            pass
+else:
+    DB_PATH = LOCAL_DB
 
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
@@ -48,5 +62,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
     except Exception:
         return plain_password == hashed_password
+
+def get_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 Base.metadata.create_all(bind=engine)

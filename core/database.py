@@ -1,28 +1,11 @@
 import os
-import shutil
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base
+import bcrypt
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LOCAL_DB = os.path.join(BASE_DIR, "disys_system.db")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "disys_system.db")
 
-# En entornos Linux (Streamlit Cloud), usamos /tmp para garantizar permisos de escritura
-if os.name != "nt":
-    TMP_DIR = "/tmp"
-    DB_PATH = os.path.join(TMP_DIR, "disys_system.db")
-    
-    # Si la base de datos no está en /tmp pero existe la plantilla del repo, se copia
-    if not os.path.exists(DB_PATH) and os.path.exists(LOCAL_DB):
-        shutil.copy2(LOCAL_DB, DB_PATH)
-        try:
-            os.chmod(DB_PATH, 0o666)
-        except Exception:
-            pass
-else:
-    # En Windows (entorno local de desarrollo)
-    DB_PATH = LOCAL_DB
-
-# Conexión SQLite con soporte para múltiples hilos
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(
@@ -32,3 +15,38 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password_hash = Column(String)
+    rol = Column(String)
+
+class Evaluacion(Base):
+    __tablename__ = "evaluaciones"
+    id = Column(Integer, primary_key=True, index=True)
+    codigo_expediente = Column(String, unique=True, index=True)
+    candidato_nombre = Column(String)
+    candidato_cedula = Column(String)
+    perfil_evaluado = Column(String)
+    evaluador_username = Column(String)
+    sucursal = Column(String)
+    puntaje_fase1 = Column(Float)
+    puntaje_fase2 = Column(Float)
+    puntaje_total_ponderado = Column(Float)
+    sinceridad_distorsion = Column(Integer)
+    alerta_roja = Column(Integer)
+    detalle_alerta = Column(String)
+    dictamen_final = Column(String)
+    fecha_evaluacion = Column(String)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    if not hashed_password:
+        return False
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
+        return plain_password == hashed_password
+
+Base.metadata.create_all(bind=engine)

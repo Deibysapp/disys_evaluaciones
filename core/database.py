@@ -1,6 +1,7 @@
 import os
 import shutil
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text
+from datetime import datetime
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 import bcrypt
 
@@ -8,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(BASE_DIR)
 LOCAL_DB = os.path.join(REPO_ROOT, "disys_system.db")
 
-# En Streamlit Cloud Linux, usar /tmp para permisos de escritura
+# En la nube trabajamos sobre /tmp para permisos garantizados de escritura
 if os.name != "nt":
     DB_PATH = "/tmp/disys_system.db"
     if not os.path.exists(DB_PATH) and os.path.exists(LOCAL_DB):
@@ -56,7 +57,7 @@ class Evaluacion(Base):
     alerta_roja = Column(Integer)
     detalle_alerta = Column(String)
     dictamen_final = Column(Text)
-    fecha_evaluacion = Column(String)
+    fecha_evaluacion = Column(DateTime, default=datetime.utcnow)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not hashed_password:

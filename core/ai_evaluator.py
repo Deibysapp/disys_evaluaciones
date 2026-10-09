@@ -5,40 +5,38 @@ from google import genai
 
 def obtener_cliente_gemini():
     api_key = None
-    
-    # 1. Leer de secrets de Streamlit Cloud
     try:
         if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
             api_key = str(st.secrets["GEMINI_API_KEY"]).strip()
     except Exception:
         pass
 
-    # 2. Leer de variables de entorno si existe
     if not api_key:
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
     if not api_key:
-        raise ValueError("Clave GEMINI_API_KEY no encontrada en Secrets ni en variables de entorno.")
+        raise ValueError("Clave GEMINI_API_KEY no encontrada.")
 
     os.environ["GEMINI_API_KEY"] = api_key
     return genai.Client(api_key=api_key)
 
+def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
+    """
+    Acepta cualquier combinación de parámetros (diccionario posicional o argumentos nombrados).
+    """
+    datos = {}
+    if args and isinstance(args[0], dict):
+        datos.update(args[0])
+    datos.update(kwargs)
 
-def peritar_evaluacion_con_gemini(datos_evaluacion: dict) -> str:
-    """
-    Genera el dictamen pericial psicológico mediante Gemini con respaldo ante fallos.
-    """
-    cliente = obtener_cliente_gemini()
-    
-    # Construcción de la instrucción pericial para la IA
-    candidato = datos_evaluacion.get("nombre", "Aspirante")
-    cedula = datos_evaluacion.get("cedula", "S/D")
-    cargo = datos_evaluacion.get("perfil", "General")
-    sucursal = datos_evaluacion.get("sucursal", "N/A")
-    p_fase1 = datos_evaluacion.get("puntaje_fase1", 0)
-    p_fase2 = datos_evaluacion.get("puntaje_fase2", 0)
-    total = datos_evaluacion.get("puntaje_total", 0)
-    respuestas = datos_evaluacion.get("respuestas_detalle", "Sin detalles.")
+    candidato = datos.get("nombre") or datos.get("candidato_nombre") or "Aspirante"
+    cedula = datos.get("cedula") or datos.get("candidato_cedula") or "S/D"
+    cargo = datos.get("cargo") or datos.get("perfil") or datos.get("perfil_evaluado") or "General"
+    sucursal = datos.get("sucursal") or "N/A"
+    p_fase1 = datos.get("puntaje_fase1", 0)
+    p_fase2 = datos.get("puntaje_fase2", 0)
+    total = datos.get("puntaje_total") or datos.get("puntaje_total_ponderado") or 0
+    respuestas = datos.get("respuestas_detalle") or datos.get("respuestas") or "Completado conforme a baremo."
 
     prompt = f"""
     Actúa como un Perito Evaluador Psicométrico Senior y Psicólogo Organizacional Forense.
@@ -63,6 +61,7 @@ def peritar_evaluacion_con_gemini(datos_evaluacion: dict) -> str:
     4. RECOMENDACIÓN FINAL Y DICTAMEN (APTO, APTO CON OBSERVACIONES o NO RECOMENDADO)
     """
 
+    cliente = obtener_cliente_gemini()
     modelos = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
     ultimo_error = None
 

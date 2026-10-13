@@ -201,9 +201,9 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                 try:
                     # 1. Calificación matemática objetiva contra baremo
                     calificacion = calificar_respuestas_aspirante(
-                        perfil_key=perfil_seleccionado_key,
-                        respuestas=respuestas_ingresadas
-                    )
+    perfil_key=cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "",
+    respuestas=respuestas_ingresadas
+)
 
                     datos_aspirante = {
                         "nombre": candidato_nombre,

@@ -6925,12 +6925,20 @@ def calificar_respuestas_aspirante(perfil_key: str, respuestas: dict):
     Detecta patrones de azar y calcula la distorsión / deseabilidad social.
     """
     # 1. Obtener la clave correspondiente
-    clave = PAUTAS_CORRECCION.get(perfil_key)
-    if not clave:
-        # Búsqueda por prefijo numérico
-        pk_clean = str(perfil_key).split("_")[0]
+    clave = None
+    pk_str = str(perfil_key).upper().strip()
+    
+    # 1. Búsqueda por coincidencia en clave o código
+    if perfil_key in PAUTAS_CORRECCION:
+        clave = PAUTAS_CORRECCION[perfil_key]
+    else:
         for k, v in PAUTAS_CORRECCION.items():
-            if k.startswith(f"{pk_clean}_") or k.startswith(f"{int(pk_clean):02d}_" if pk_clean.isdigit() else ""):
+            if pk_str in k or any(palabra in k for palabra in pk_str.split() if len(palabra) > 3):
+                clave = v
+                break
+            # Revisar si coincide con el código del perfil en BANCO_PREGUNTAS
+            info_banco = BANCO_PREGUNTAS.get(k, {})
+            if info_banco.get("codigo") == pk_str:
                 clave = v
                 break
     

@@ -258,13 +258,9 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
                     # 4. Generación del documento PDF
                     pdf_bytes_dictamen = generar_pdf_dictamen_ia(
-                    candidato_nombre,
-                    candidato_cedula,
-                    cfg_perfil["nombre"],
-                    sucursal_eval,
-                    fecha_eval.strftime("%d/%m/%Y"),
-                    evaluador_nom,
-                    informe_resultado
+                    datos_aspirante,
+                    informe_resultado,
+                    cfg_perfil["nombre"]
                 )
 
                     st.session_state["pdf_listo"] = True

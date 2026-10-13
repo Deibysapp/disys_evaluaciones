@@ -21,30 +21,64 @@ def obtener_cliente_gemini():
     return genai.Client(api_key=api_key)
 
 
-def _generar_dictamen_texto(nombre: str, cedula: str, cargo: str, sucursal: str, evaluador: str, fecha: str) -> str:
+def _generar_dictamen_contingencia(datos: dict, metricas: dict) -> str:
+    """Plantilla que refleja con precisión matemática el desempeño real."""
+    candidato = datos.get("nombre") or datos.get("candidato_nombre") or "Aspirante"
+    cedula = datos.get("cedula") or datos.get("candidato_cedula") or "S/D"
+    cargo = datos.get("cargo") or datos.get("perfil") or "General"
+    sucursal = datos.get("sucursal") or "Corporativo"
+    fecha = datos.get("fecha") or "13/10/2026"
+    evaluador = datos.get("evaluador") or "Administrador Maestro DiSys"
+
+    p_f1 = metricas.get("puntaje_fase1", 0)
+    p_f2 = metricas.get("puntaje_fase2", 0)
+    total = metricas.get("puntaje_total", 0)
+    aciertos = metricas.get("aciertos_totales", 0)
+    preguntas = metricas.get("total_preguntas", 30)
+    distorsion = metricas.get("distorsion", 0)
+    es_azar = metricas.get("es_azar", False)
+
+    # Lógica de dictamen pericial forense
+    if es_azar or total < 45.0:
+        veredicto = "NO RECOMENDADO"
+        conclusion = f"El aspirante NO CALIFICA para el cargo de {cargo}. El rendimiento situacional ({total}%) es crítico e insuficiente para asumir responsabilidades operativas o de cobranza."
+        analisis_distorsion = "SE DETECTA PATRÓN DE RESPUESTA POR AZAR O DISPERSIÓN SEVERA. Las elecciones carecen de congruencia técnica, denotando falta de criterio o desinterés en la prueba."
+    elif distorsion >= 4:
+        veredicto = "APTO CON OBSERVACIONES (DISTORSIÓN DETECTADA)"
+        conclusion = f"El aspirante obtiene un puntaje técnico de {total}%, pero muestra una tendencia deliberada a falsear respuestas hacia la deseabilidad social. Se recomienda entrevista presencial de confrontación."
+        analisis_distorsion = f"Índice de distorsión elevado ({distorsion}/6 puntos). El candidato intentó proyectar una imagen irrealmente perfecta en situaciones de presión y error humano."
+    elif total < 70.0:
+        veredicto = "APTO CON OBSERVACIONES"
+        conclusion = f"El aspirante reúne competencias básicas ({total}%), pero requiere supervisión estricta en gestión de conflictos y apego a normas de crédito/operaciones."
+        analisis_distorsion = "Índice de sinceridad aceptable, sin alertas rojas de manipulación."
+    else:
+        veredicto = "APTO"
+        conclusion = f"El evaluado reúne plenamente el perfil de competencias, madurez y criterio situacional requerido para {cargo}."
+        analisis_distorsion = "Respuestas coherentes y consistentes con los baremos institucionales."
+
     return f"""DICTAMEN PERICIAL PSICOTÉCNICO SITUACIONAL Y FORENSE
 Expediente Técnico: EXP-{cedula}
 Fecha de Emisión: {fecha}
-Perito Evaluador: {evaluador}
+Perito Evaluador Responsable: {evaluador}
 
 1. RESUMEN EJECUTIVO Y CONGRUENCIA DEL PERFIL
-- Evaluado: {nombre} | Documento de Identidad: {cedula}
+- Evaluado: {candidato} | Cédula: {cedula}
 - Cargo Postulado: {cargo} | Centro Operativo / Sede: {sucursal}
-- Diagnóstico General: El aspirante presenta un índice de compatibilidad psicológica y conductual alineado a los requerimientos operacionales y estratégicos del cargo. Se observa madurez laboral, criterio analítico estructurado y disposición a la ejecución en calle y punto de venta.
+- Rendimiento Cuantitativo: {aciertos} de {preguntas} reactivos correctos ({total}%).
+- Fase 1 (Aptitud y Criterio Técnico): {p_f1}% | Fase 2 (Gestión Situacional y Presión): {p_f2}%.
 
 2. ANÁLISIS DE COMPETENCIAS CRÍTICAS Y CONDUCTUALES
-- Orientación Comercial y Cierre: Demuestra alta proactividad hacia la prospección, negociación y sostenimiento de cartera de clientes. Capacidad para defender valor y condiciones comerciales.
-- Apego a Políticas y Gestión de Cobranza: Evidencia respeto estricto hacia los límites de crédito, plazos de pago y protocolos de facturación. Bajo riesgo de permisividad en cuentas vencidas.
-- Resiliencia y Tolerancia a la Frustración: Adecuada autorregulación emocional frente a objeciones, cuotas comerciales elevadas y variaciones del mercado regional.
-- Trabajo en Equipo y Relaciones Interpersonales: Comunicación asertiva, sentido de subordinación funcional y capacidad de coordinación transversal con almacén, créditos y despacho.
+- Criterio de Decisión y Procedimientos: El aspirante obtuvo un rendimiento de {p_f1}% en apego normativo. {"Presenta lagunas severas de juicio frente a situaciones de conflicto." if total < 50 else "Demuestra criterio acorde a las exigencias."}
+- Tolerancia a la Frustración y Trabajo bajo Presión: {"Baja capacidad de contención; patrón errático o reactivo frente a escenarios de alta exigencia." if total < 50 else "Capacidad adecuada de autorregulación emocional en ruta y cobranza."}
+- Defensa de Políticas Corporativas: {"Alto riesgo de indulgencia o vulneración de límites crediticios." if total < 50 else "Alineación consistente con las directrices de control interno."}
 
 3. EVALUACIÓN DE INTEGRIDAD, SINCERIDAD Y FACTORES DE RIESGO
-- Indicador de Distorsión y Sinceridad: Consistente. El patrón de respuestas denota transparencia en la autoevaluación, sin intentos deliberados de proyectar una imagen irreal (deseabilidad social controlada).
-- Factores Críticos / Alertas: Sin banderas rojas detectadas respecto a deshonestidad operativa, manejo de valores o desacato disciplinario.
+- Indicador de Deseabilidad Social: {distorsion} puntos acumulados.
+- Análisis de Validez del Protocolo: {analisis_distorsion}
 
 4. CONCLUSIONES Y RECOMENDACIÓN FINAL
-DICTAMEN: APTO
-El perfil evaluado reúne las aptitudes, estabilidad emocional y disciplina técnica necesarias para asumir las funciones de {cargo} en {sucursal}."""
+DICTAMEN: {veredicto}
+{conclusion}"""
 
 
 def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
@@ -57,39 +91,68 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     if not isinstance(dc, dict):
         dc = {}
 
-    nombre = dc.get("nombre") or datos.get("candidato_nombre") or datos.get("nombre") or "Aspirante"
-    cedula = dc.get("cedula") or datos.get("candidato_cedula") or datos.get("cedula") or "S/D"
-    cargo = datos.get("cargo") or dc.get("cargo") or datos.get("perfil") or "General"
-    sucursal = dc.get("sucursal") or datos.get("sucursal") or "Corporativo"
+    metricas = datos.get("metricas_evaluacion") or {}
+    if not isinstance(metricas, dict):
+        metricas = {
+            "puntaje_fase1": dc.get("puntaje_fase1", 0),
+            "puntaje_fase2": dc.get("puntaje_fase2", 0),
+            "puntaje_total": dc.get("puntaje_total", 0),
+            "distorsion": dc.get("distorsion", 0),
+            "alerta_roja": dc.get("alerta_roja", False),
+            "es_azar": dc.get("es_azar", False)
+        }
+
+    candidato = dc.get("nombre") or datos.get("candidato_nombre") or "Aspirante"
+    cedula = dc.get("cedula") or datos.get("candidato_cedula") or "S/D"
+    cargo = datos.get("cargo") or dc.get("cargo") or "General"
+    sucursal = dc.get("sucursal") or "Corporativo"
     fecha = dc.get("fecha") or "13/10/2026"
     evaluador = dc.get("evaluador") or "Administrador Maestro DiSys"
     respuestas = str(datos.get("respuestas_marcadas") or "")
-    preguntas = str(datos.get("preguntas_contexto") or "")
 
     prompt = f"""
-    Actúa como Perito Psicólogo Organizacional Forense y Consultor Senior en Evaluación Psicométrica.
-    Elabora un Dictamen Pericial Psicotécnico Situacional exhaustivo, técnico, con lenguaje formal corporativo para:
+    Actúa como Perito Psicólogo Organizacional Forense de la Distribuidora.
+    Tu trabajo es evaluar con RIGOR CIENTÍFICO y TOTAL OBJETIVIDAD los resultados reales del aspirante.
+    NUNCA emitas dictamen APTO si el aspirante respondió al azar o sacó mala puntuación.
 
-    DATOS DEL ASPIRANTE:
-    - Nombre: {nombre}
-    - Cédula de Identidad: {cedula}
-    - Cargo Postulado: {cargo}
-    - Sucursal: {sucursal}
-    - Evaluador Responsable: {evaluador}
+    DATOS CUANTITATIVOS REALES DEL TEST:
+    - Aspirante: {candidato} (C.I.: {cedula})
+    - Cargo Postulado: {cargo} | Sucursal: {sucursal}
+    - Puntaje Total Obtenido: {metricas.get('puntaje_total')}%
+    - Aciertos Fase 1: {metricas.get('puntaje_fase1')}%
+    - Aciertos Fase 2: {metricas.get('puntaje_fase2')}%
+    - Aciertos Totales: {metricas.get('aciertos_totales')}/{metricas.get('total_preguntas')}
+    - Índice de Distorsión / Mentira: {metricas.get('distorsion')} puntos.
+    - Patrón de Azar Detectado: {'SÍ (RESPONDIÓ AL AZAR O CON REPETICIÓN MONÓTONA)' if metricas.get('es_azar') else 'NO'}
     - Respuestas Marcadas: {respuestas}
-    - Banco Contextual: {preguntas}
 
-    INSTRUCCIONES DE REDACCIÓN:
-    - No uses introducciones superficiales.
-    - Desarrolla cada punto con profundidad técnica (mínimo 2 o 3 párrafos sólidos o viñetas extensas por punto).
-    - Evalúa competencias directas del sector comercial: negociación, persuasión, cobro y crédito, disciplina de ruta, cumplimiento de directrices y resistencia al estrés.
-    
-    RESPETA ESTA ESTRUCTURA OBLIGATORIA:
+    REGLAS ESTRICTAS DE DICTAMEN:
+    - Si el puntaje total es inferior al 50% o respondió al azar: DICTAMEN: NO RECOMENDADO. Critica la falta de criterio técnico, el patrón de respuestas y el riesgo operativo.
+    - Si el puntaje está entre 50% y 69%: DICTAMEN: APTO CON OBSERVACIONES. Señala las fallas en normas, cobros y ventas.
+    - Si la distorsión es >= 4: DICTAMEN: APTO CON OBSERVACIONES (DISTORSIÓN DETECTADA). Señala que intentó mentir fingiendo perfección.
+    - Solo si el puntaje es >= 70% y distorsión baja: DICTAMEN: APTO.
+
+    FORMATO REQUERIDO OBLIGATORIO:
+    DICTAMEN PERICIAL PSICOTÉCNICO SITUACIONAL Y FORENSE
+    Expediente Técnico: EXP-{cedula}
+    Fecha de Emisión: {fecha}
+    Perito Evaluador Responsable: {evaluador}
+
     1. RESUMEN EJECUTIVO Y CONGRUENCIA DEL PERFIL
+    [Detalla los puntajes reales obtenidos y la validez de la prueba]
+
     2. ANÁLISIS DE COMPETENCIAS CRÍTICAS Y CONDUCTUALES
+    - Criterio de Decisión y Procedimientos: [Análisis técnico real según su puntaje]
+    - Tolerancia a la Frustración y Trabajo bajo Presión: [Análisis de estabilidad]
+    - Apego a Políticas y Cobranza: [Riesgo de fraude o permisividad]
+
     3. EVALUACIÓN DE INTEGRIDAD, SINCERIDAD Y FACTORES DE RIESGO
+    - Índice de Distorsión Psicométrica: [Evalúa la deseabilidad social o azar]
+    - Factores Críticos / Alertas: [Señala si hay alerta roja]
+
     4. CONCLUSIONES Y RECOMENDACIÓN FINAL
-    DICTAMEN: APTO (o APTO CON OBSERVACIONES / NO RECOMENDADO según el rendimiento)
+    DICTAMEN: [APTO / APTO CON OBSERVACIONES / NO RECOMENDADO]
+    [Fundamentación directa y sin ambigüedades]
     """
 
     modelos = ["gemini-3.8-flash", "gemini-2.5-flash"]
@@ -99,12 +162,9 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
             try:
                 res = cliente.models.generate_content(
                     model=mod, 
-                    contents=prompt,
-                    config={
-                        "temperature": 0.2
-                    }
+                    contents=prompt
                 )
-                if res and res.text and len(res.text.strip()) > 80:
+                if res and res.text and len(res.text.strip()) > 100:
                     return str(res.text).strip()
             except Exception:
                 time.sleep(1)
@@ -112,4 +172,4 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     except Exception:
         pass
 
-    return _generar_dictamen_texto(nombre, cedula, cargo, sucursal, evaluador, fecha)
+    return _generar_dictamen_contingencia(datos, metricas)

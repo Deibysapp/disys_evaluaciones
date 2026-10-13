@@ -6759,3 +6759,239 @@ def obtener_datos_test(perfil_key: str):
         if any(palabra in k for palabra in pk_clean.split("_") if len(palabra) > 3):
             return v
     return None
+    # =========================================================================
+# PAUTAS OFICIALES DE CORRECCIÓN SITUACIONAL Y CONTROL DE SINCERIDAD
+# =========================================================================
+
+# Claves correctas para cada perfil de cargo
+PAUTAS_CORRECCION = {
+    # 01. ADMINISTRADOR DE VENTAS
+    "01_ADMINISTRADOR_DE_VENTAS": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "D", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 02. ADMINISTRADORA
+    "02_ADMINISTRADORA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "A", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 03. ALMACENISTA
+    "03_ALMACENISTA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "C", 26: "D", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 04. ANALISTA DE COBRANZA
+    "04_ANALISTA_DE_COBRANZA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "C", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 05. ANALISTA DE COMPRAS
+    "05_ANALISTA_DE_COMPRAS": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 06. ANALISTA DE CONCILIACIÓN
+    "06_ANALISTA_DE_CONCILIACION": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 08. ANALISTA DE LOGÍSTICA
+    "08_ANALISTA_DE_LOGISTICA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 09. ANALISTA DE SISTEMA SADA
+    "09_ANALISTA_DE_SISTEMA_SADA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "B", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 11. ASESOR DE VENTAS (IPC-T)
+    "11_ASESOR_DE_VENTAS": {
+        1: "A", 2: "C", 3: "D", 4: "B", 5: "A", 6: "D", 7: "B", 8: "C", 9: "B", 10: "C",
+        11: "D", 12: "A", 13: "C", 14: "B", 15: "A", 16: "A", 17: "D", 18: "C", 19: "B", 20: "C",
+        21: "C", 22: "A", 23: "B", 24: "B", 25: "D", 26: "A", 27: "C", 28: "D", 29: "C", 30: "B"
+    },
+    # 14. ASISTENCIA ADMINISTRATIVA CONTABLE
+    "14_ASISTENCIA_ADMINISTRATIVA_CONTABLE": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 13. AYUDANTE ALMACÉN Y DESPACHO
+    "13_AYUDANTE_ALMACEN_Y_DESPACHO": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "B", 29: "B", 30: "C"
+    },
+    # 15. CONTADOR
+    "15_CONTADOR": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "A", 22: "B", 23: "C", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 16. COORDINACIÓN DE VENTAS
+    "16_COORDINACION_DE_VENTAS": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "C", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 17. COORDINADOR ADMINISTRATIVO DE AGENCIA
+    "17_COORDINADOR_ADMINISTRATIVO_DE_AGENCIA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "B", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 18. COORDINADOR DE PROCESOS
+    "18_COORDINADOR_DE_PROCESOS": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "A", 17: "C", 18: "B", 19: "C", 20: "C",
+        21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 19. COORDINADOR DE TALENTO HUMANO
+    "19_COORDINADOR_DE_TALENTO_HUMANO": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 20. COORDINADOR DE OPERACIONES
+    "20_COORDINADOR_DE_OPERACIONES": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 21. DESPACHADOR
+    "21_DESPACHADOR": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 22. MANTENIMIENTO Y LIMPIEZA
+    "22_MANTENIMIENTO_Y_LIMPIEZA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 23. MERCADERISTA
+    "23_MERCADERISTA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 24. OPERADOR DE MONTACARGAS
+    "24_OPERADOR_DE_MONTACARGAS": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 25. SUPERVISOR DE COBRANZA
+    "25_SUPERVISOR_DE_COBRANZA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 26. SUPERVISOR DE LOGÍSTICA
+    "26_SUPERVISOR_DE_LOGISTICA": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    },
+    # 27. VIGILANTE
+    "27_VIGILANTE": {
+        1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D",
+        11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C",
+        21: "D", 22: "A", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"
+    }
+}
+
+# Opciones absolutistas o irreales de la escala de deseabilidad social
+DISTORSION_KEYS = {
+    # Perfil 11 (Ventas)
+    "11_ASESOR_DE_VENTAS": {2: "B", 7: "C", 10: "A", 16: "D", 20: "B", 24: "C", 29: "A"},
+    # Estándar general para los demás perfiles:
+    "ESTANDAR": {4: "C", 9: "A", 14: "D", 19: "B", 24: "C", 29: "A"}
+}
+
+def calificar_respuestas_aspirante(perfil_key: str, respuestas: dict):
+    """
+    Evalúa matemáticamente las respuestas marcadas contra la clave oficial.
+    Detecta patrones de azar y calcula la distorsión / deseabilidad social.
+    """
+    # 1. Obtener la clave correspondiente
+    clave = PAUTAS_CORRECCION.get(perfil_key)
+    if not clave:
+        # Búsqueda por prefijo numérico
+        pk_clean = str(perfil_key).split("_")[0]
+        for k, v in PAUTAS_CORRECCION.items():
+            if k.startswith(f"{pk_clean}_") or k.startswith(f"{int(pk_clean):02d}_" if pk_clean.isdigit() else ""):
+                clave = v
+                break
+    
+    # Fallback si el perfil no coincide
+    if not clave:
+        clave = PAUTAS_CORRECCION.get("01_ADMINISTRADOR_DE_VENTAS", {})
+
+    total_preguntas = len(clave) if len(clave) > 0 else 30
+    aciertos_fase1 = 0 # Primeras 15 preguntas
+    aciertos_fase2 = 0 # Últimas 15 preguntas
+    distorsion_puntos = 0
+
+    dist_map = DISTORSION_KEYS.get(perfil_key, DISTORSION_KEYS["ESTANDAR"])
+
+    conteos_opcion = {"A": 0, "B": 0, "C": 0, "D": 0}
+
+    for item, opcion_marcada in respuestas.items():
+        opc = str(opcion_marcada).strip().upper()
+        conteos_opcion[opc] = conteos_opcion.get(opc, 0) + 1
+
+        # Verificar acierto
+        correcta = clave.get(int(item))
+        if opc == correcta:
+            if int(item) <= 15:
+                aciertos_fase1 += 1
+            else:
+                aciertos_fase2 += 1
+
+        # Verificar distorsión / deseabilidad social
+        if int(item) in dist_map and opc == dist_map[int(item)]:
+            distorsion_puntos += 1
+
+    # Detección de respuestas en bloque o patrón monótono (Azar deliberado)
+    max_repeticiones = max(conteos_opcion.values()) if conteos_opcion else 0
+    es_azar_monotono = max_repeticiones >= 18 # Marcó 18 o más veces la misma letra
+
+    puntaje_f1 = round((aciertos_fase1 / 15.0) * 100, 1)
+    puntaje_f2 = round((aciertos_fase2 / 15.0) * 100, 1)
+    puntaje_ponderado = round(((aciertos_fase1 + aciertos_fase2) / float(total_preguntas)) * 100, 1)
+
+    # Veredicto preliminar
+    alerta_roja = False
+    detalle_alerta = "Perfil evaluado dentro de parámetros normales."
+
+    if es_azar_monotono:
+        alerta_roja = True
+        detalle_alerta = "ALERTA ROJA: Patrón de respuestas monótono/azar detectado (más del 60% con la misma opción)."
+    elif distorsion_puntos >= 4:
+        detalle_alerta = "ALERTA: Alto índice de deseabilidad social o fingimiento de perfección (Distorsión)."
+    elif puntaje_ponderado < 50.0:
+        alerta_roja = True
+        detalle_alerta = "ALERTA ROJA: Puntaje crítico por debajo del umbral mínimo de competencia."
+
+    return {
+        "puntaje_fase1": puntaje_f1,
+        "puntaje_fase2": puntaje_f2,
+        "puntaje_total": puntaje_ponderado,
+        "aciertos_totales": (aciertos_fase1 + aciertos_fase2),
+        "total_preguntas": total_preguntas,
+        "distorsion": distorsion_puntos,
+        "alerta_roja": alerta_roja,
+        "detalle_alerta": detalle_alerta,
+        "es_azar": es_azar_monotono
+    }

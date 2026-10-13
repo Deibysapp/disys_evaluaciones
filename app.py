@@ -5,7 +5,7 @@ from datetime import datetime
 from core.database import SessionLocal, Usuario, Evaluacion, verify_password, get_password_hash
 from core.profiles_data import CATALOGO_PERFILES
 from core.test_printer import generar_cuadernillo_test_pdf
-from core.questions_bank import BANCO_PREGUNTAS
+from core.questions_bank import BANCO_PREGUNTAS, obtener_datos_test, calificar_respuestas_aspirante
 from core.ai_evaluator import peritar_evaluacion_con_gemini
 from core.pdf_generator import generar_pdf_dictamen_ia
 st.set_page_config(
@@ -207,38 +207,56 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                         "fecha": fecha_eval.strftime("%d/%m/%Y"),
                         "evaluador": evaluador_nom
                     }
+# 1. Calificación matemática real de las respuestas
+                calificacion = calificar_respuestas_aspirante(
+                    perfil_key=perfil_seleccionado_key,
+                    respuestas=respuestas_ingresadas
+                )
 
-                    informe_resultado = peritar_evaluacion_con_gemini(
-                        cargo=cfg_perfil["nombre"],
-                        datos_candidato=datos_aspirante,
-                        respuestas_marcadas=respuestas_ingresadas,
-                        preguntas_contexto=preguntas_actuales
+                # 2. Asignar los valores calculados al diccionario del aspirante
+                datos_aspirante["puntaje_fase1"] = calificacion["puntaje_fase1"]
+                datos_aspirante["puntaje_fase2"] = calificacion["puntaje_fase2"]
+                datos_aspirante["puntaje_total"] = calificacion["puntaje_total"]
+                datos_aspirante["distorsion"] = calificacion["distorsion"]
+                datos_aspirante["alerta_roja"] = calificacion["alerta_roja"]
+                datos_aspirante["detalle_alerta"] = calificacion["detalle_alerta"]
+
+                # 3. Invocar el peritaje técnico de IA
+                informe_resultado = peritar_evaluacion_con_gemini(
+                    cargo=cfg_perfil["nombre"],
+                    datos_candidato=datos_aspirante,
+                    respuestas_marcadas=respuestas_ingresadas,
+                    metricas_evaluacion=calificacion
+                )
+
+                codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+                # 4. Guardar registro con datos reales en la BD
+                db = SessionLocal()
+                try:
+                    nueva_eval = Evaluacion(
+                        codigo_expediente=codigo_exp,
+                        candidato_nombre=candidato_nombre,
+                        candidato_cedula=candidato_cedula,
+                        perfil_evaluado=cfg_perfil["nombre"],
+                        evaluador_username=st.session_state.user["username"],
+                        sucursal=sucursal_eval,
+                        puntaje_fase1=calificacion["puntaje_fase1"],
+                        puntaje_fase2=calificacion["puntaje_fase2"],
+                        puntaje_total_ponderado=calificacion["puntaje_total"],
+                        sinceridad_distorsion=calificacion["distorsion"],
+                        alerta_roja=1 if calificacion["alerta_roja"] else 0,
+                        detalle_alerta=calificacion["detalle_alerta"],
+                        dictamen_final=informe_resultado,
+                        fecha_evaluacion=datetime.now()
                     )
-
-                    codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-
-                    # Guardar registro en BD
-                    db = SessionLocal()
-                    try:
-                        nueva_eval = Evaluacion(
-                            codigo_expediente=codigo_exp,
-                            candidato_nombre=candidato_nombre,
-                            candidato_cedula=candidato_cedula,
-                            perfil_evaluado=cfg_perfil["nombre"],
-                            evaluador_username=st.session_state.user["username"],
-                            sucursal=sucursal_eval,
-                            puntaje_fase1=100.0,
-                            puntaje_fase2=0.0,
-                            puntaje_total_ponderado=100.0,
-                            sinceridad_distorsion=0,
-                            alerta_roja=False,
-                            detalle_alerta="Peritaje dinámico completado.",
-                            dictamen_final="Auditado por IA"
-                        )
-                        db.add(nueva_eval)
-                        db.commit()
-                    finally:
-                        db.close()
+                    db.add(nueva_eval)
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    st.warning(f"Aviso de registro: {e}")
+                finally:
+                    db.close()
 
                     st.success("Dictamen pericial emitido con éxito.")
                     st.markdown("---")

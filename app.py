@@ -419,12 +419,9 @@ elif menu_seleccionado == "Historial de Expedientes":
 # PANEL MASTER
 # -------------------------------------------------------------
 elif menu_seleccionado == "Panel Master (Gestión de Usuarios)":
-        st.markdown("""
-        <div class="main-header">
-            <h2 style='margin:0;'>Panel Master - Gestión de Usuarios y Accesos</h2>
-            <p style='margin:0; font-size:13px; opacity:0.9;'>Creación, asignación de sedes y revocación inmediata de cuentas</p>
-        </div>
-        """, unsafe_allow_html=True)
+        elif menu_seleccionado == "Panel Master (Gestión de Usuarios)":
+        st.header("Panel Master - Gestión de Usuarios y Accesos")
+        st.caption("Creación, asignación de sedes y revocación inmediata de cuentas")
     
     tab_crear, tab_listar = st.tabs(["Crear Evaluador", "Evaluadores Activos y Suspender"])
     

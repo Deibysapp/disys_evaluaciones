@@ -291,8 +291,8 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                 except Exception as e_proc:
                     st.error(f"Error procesando el peritaje: {e_proc}")
 
-    # Panel de Resumen Ejecutivo y Descargas
-    if st.session_state.get("evaluacion_completada"):
+ # Panel de Resumen Ejecutivo y Descargas
+ if st.session_state.get("evaluacion_completada"):
         res = st.session_state["calificacion"]
         
         st.markdown("<br/>", unsafe_allow_html=True)

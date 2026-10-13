@@ -193,35 +193,34 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
     # Botón de Peritaje
     st.markdown("<br/>", unsafe_allow_html=True)
-    if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
-        if not candidato_nombre or not candidato_cedula:
-            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
-        else:
-            with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
-                try:
-                    datos_aspirante = {
-                        "nombre": candidato_nombre,
-                        "cedula": candidato_cedula,
-                        "cargo": cfg_perfil["nombre"],
-                        "sucursal": sucursal_eval,
-                        "fecha": fecha_eval.strftime("%d/%m/%Y"),
-                        "evaluador": evaluador_nom
-                    }
-# 1. Calificación matemática real de las respuestas
+   if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
+    if not candidato_nombre or not candidato_cedula:
+        st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
+    else:
+        with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
+            try:
+                # 1. Calificación matemática objetiva contra baremo
                 calificacion = calificar_respuestas_aspirante(
                     perfil_key=perfil_seleccionado_key,
                     respuestas=respuestas_ingresadas
                 )
 
-                # 2. Asignar los valores calculados al diccionario del aspirante
-                datos_aspirante["puntaje_fase1"] = calificacion["puntaje_fase1"]
-                datos_aspirante["puntaje_fase2"] = calificacion["puntaje_fase2"]
-                datos_aspirante["puntaje_total"] = calificacion["puntaje_total"]
-                datos_aspirante["distorsion"] = calificacion["distorsion"]
-                datos_aspirante["alerta_roja"] = calificacion["alerta_roja"]
-                datos_aspirante["detalle_alerta"] = calificacion["detalle_alerta"]
+                datos_aspirante = {
+                    "nombre": candidato_nombre,
+                    "cedula": candidato_cedula,
+                    "cargo": cfg_perfil["nombre"],
+                    "sucursal": sucursal_eval,
+                    "fecha": fecha_eval.strftime("%d/%m/%Y"),
+                    "evaluador": evaluador_nom,
+                    "puntaje_fase1": calificacion["puntaje_fase1"],
+                    "puntaje_fase2": calificacion["puntaje_fase2"],
+                    "puntaje_total": calificacion["puntaje_total"],
+                    "distorsion": calificacion["distorsion"],
+                    "alerta_roja": calificacion["alerta_roja"],
+                    "detalle_alerta": calificacion["detalle_alerta"]
+                }
 
-                # 3. Invocar el peritaje técnico de IA
+                # 2. Emisión del dictamen pericial
                 informe_resultado = peritar_evaluacion_con_gemini(
                     cargo=cfg_perfil["nombre"],
                     datos_candidato=datos_aspirante,
@@ -231,7 +230,7 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
                 codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
-                # 4. Guardar registro con datos reales en la BD
+                # 3. Almacenamiento en base de datos
                 db = SessionLocal()
                 try:
                     nueva_eval = Evaluacion(
@@ -254,41 +253,27 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                     db.commit()
                 except Exception as e:
                     db.rollback()
-                    st.warning(f"Aviso de registro: {e}")
                 finally:
                     db.close()
 
-                    st.success("Dictamen pericial emitido con éxito.")
-                    st.markdown("---")
-                    st.markdown(informe_resultado)
+                # 4. Generación del documento PDF
+                pdf_bytes_dictamen = generar_pdf_evaluacion(
+                    candidato_nombre,
+                    candidato_cedula,
+                    cfg_perfil["nombre"],
+                    sucursal_eval,
+                    fecha_eval.strftime("%d/%m/%Y"),
+                    evaluador_nom,
+                    informe_resultado
+                )
 
-                    # Generar PDF del dictamen pericial
-                    pdf_bytes_dictamen = generar_pdf_dictamen_ia(
-                        datos_candidato=datos_aspirante,
-                        dictamen_texto=informe_resultado,
-                        cargo=cfg_perfil["nombre"]
-                    )
+                st.session_state["pdf_listo"] = True
+                st.session_state["pdf_bytes"] = pdf_bytes_dictamen
+                st.session_state["informe_txt"] = informe_resultado
+                st.success("Dictamen pericial emitido con éxito.")
 
-                    col_btn1, col_btn2 = st.columns(2)
-                    with col_btn1:
-                        st.download_button(
-                            label="📄 DESCARGAR DICTAMEN PERICIAL OFICIAL (PDF)",
-                            data=pdf_bytes_dictamen,
-                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    with col_btn2:
-                        st.download_button(
-                            label="📥 DESCARGAR INFORME (.TXT)",
-                            data=informe_resultado,
-                            file_name=f"Dictamen_{candidato_cedula}_{cfg_perfil['nombre'].replace(' ', '_')}.txt",
-                            mime="text/plain",
-                            use_container_width=True
-                        )
-
-                except Exception as e:
-                    st.error(f"Error procesando el peritaje: {str(e)}")
+            except Exception as e_proc:
+                st.error(f"Error procesando el peritaje: {e_proc}")
 
 # -------------------------------------------------------------
 # HISTORIAL Y GESTIÓN DE EXPEDIENTES

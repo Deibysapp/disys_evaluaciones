@@ -193,87 +193,87 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
     # Botón de Peritaje
     st.markdown("<br/>", unsafe_allow_html=True)
-   if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
-    if not candidato_nombre or not candidato_cedula:
-        st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
-    else:
-        with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
-            try:
-                # 1. Calificación matemática objetiva contra baremo
-                calificacion = calificar_respuestas_aspirante(
-                    perfil_key=perfil_seleccionado_key,
-                    respuestas=respuestas_ingresadas
-                )
-
-                datos_aspirante = {
-                    "nombre": candidato_nombre,
-                    "cedula": candidato_cedula,
-                    "cargo": cfg_perfil["nombre"],
-                    "sucursal": sucursal_eval,
-                    "fecha": fecha_eval.strftime("%d/%m/%Y"),
-                    "evaluador": evaluador_nom,
-                    "puntaje_fase1": calificacion["puntaje_fase1"],
-                    "puntaje_fase2": calificacion["puntaje_fase2"],
-                    "puntaje_total": calificacion["puntaje_total"],
-                    "distorsion": calificacion["distorsion"],
-                    "alerta_roja": calificacion["alerta_roja"],
-                    "detalle_alerta": calificacion["detalle_alerta"]
-                }
-
-                # 2. Emisión del dictamen pericial
-                informe_resultado = peritar_evaluacion_con_gemini(
-                    cargo=cfg_perfil["nombre"],
-                    datos_candidato=datos_aspirante,
-                    respuestas_marcadas=respuestas_ingresadas,
-                    metricas_evaluacion=calificacion
-                )
-
-                codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-
-                # 3. Almacenamiento en base de datos
-                db = SessionLocal()
+    if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
+        if not candidato_nombre or not candidato_cedula:
+            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
+        else:
+            with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
                 try:
-                    nueva_eval = Evaluacion(
-                        codigo_expediente=codigo_exp,
-                        candidato_nombre=candidato_nombre,
-                        candidato_cedula=candidato_cedula,
-                        perfil_evaluado=cfg_perfil["nombre"],
-                        evaluador_username=st.session_state.user["username"],
-                        sucursal=sucursal_eval,
-                        puntaje_fase1=calificacion["puntaje_fase1"],
-                        puntaje_fase2=calificacion["puntaje_fase2"],
-                        puntaje_total_ponderado=calificacion["puntaje_total"],
-                        sinceridad_distorsion=calificacion["distorsion"],
-                        alerta_roja=1 if calificacion["alerta_roja"] else 0,
-                        detalle_alerta=calificacion["detalle_alerta"],
-                        dictamen_final=informe_resultado,
-                        fecha_evaluacion=datetime.now()
+                    # 1. Calificación matemática objetiva contra baremo
+                    calificacion = calificar_respuestas_aspirante(
+                        perfil_key=perfil_seleccionado_key,
+                        respuestas=respuestas_ingresadas
                     )
-                    db.add(nueva_eval)
-                    db.commit()
-                except Exception as e:
-                    db.rollback()
-                finally:
-                    db.close()
 
-                # 4. Generación del documento PDF
-                pdf_bytes_dictamen = generar_pdf_evaluacion(
-                    candidato_nombre,
-                    candidato_cedula,
-                    cfg_perfil["nombre"],
-                    sucursal_eval,
-                    fecha_eval.strftime("%d/%m/%Y"),
-                    evaluador_nom,
-                    informe_resultado
-                )
+                    datos_aspirante = {
+                        "nombre": candidato_nombre,
+                        "cedula": candidato_cedula,
+                        "cargo": cfg_perfil["nombre"],
+                        "sucursal": sucursal_eval,
+                        "fecha": fecha_eval.strftime("%d/%m/%Y"),
+                        "evaluador": evaluador_nom,
+                        "puntaje_fase1": calificacion["puntaje_fase1"],
+                        "puntaje_fase2": calificacion["puntaje_fase2"],
+                        "puntaje_total": calificacion["puntaje_total"],
+                        "distorsion": calificacion["distorsion"],
+                        "alerta_roja": calificacion["alerta_roja"],
+                        "detalle_alerta": calificacion["detalle_alerta"]
+                    }
 
-                st.session_state["pdf_listo"] = True
-                st.session_state["pdf_bytes"] = pdf_bytes_dictamen
-                st.session_state["informe_txt"] = informe_resultado
-                st.success("Dictamen pericial emitido con éxito.")
+                    # 2. Emisión del dictamen pericial
+                    informe_resultado = peritar_evaluacion_con_gemini(
+                        cargo=cfg_perfil["nombre"],
+                        datos_candidato=datos_aspirante,
+                        respuestas_marcadas=respuestas_ingresadas,
+                        metricas_evaluacion=calificacion
+                    )
 
-            except Exception as e_proc:
-                st.error(f"Error procesando el peritaje: {e_proc}")
+                    codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+                    # 3. Almacenamiento en base de datos
+                    db = SessionLocal()
+                    try:
+                        nueva_eval = Evaluacion(
+                            codigo_expediente=codigo_exp,
+                            candidato_nombre=candidato_nombre,
+                            candidato_cedula=candidato_cedula,
+                            perfil_evaluado=cfg_perfil["nombre"],
+                            evaluador_username=st.session_state.user["username"],
+                            sucursal=sucursal_eval,
+                            puntaje_fase1=calificacion["puntaje_fase1"],
+                            puntaje_fase2=calificacion["puntaje_fase2"],
+                            puntaje_total_ponderado=calificacion["puntaje_total"],
+                            sinceridad_distorsion=calificacion["distorsion"],
+                            alerta_roja=1 if calificacion["alerta_roja"] else 0,
+                            detalle_alerta=calificacion["detalle_alerta"],
+                            dictamen_final=informe_resultado,
+                            fecha_evaluacion=datetime.now()
+                        )
+                        db.add(nueva_eval)
+                        db.commit()
+                    except Exception as e:
+                        db.rollback()
+                    finally:
+                        db.close()
+
+                    # 4. Generación del documento PDF
+                    pdf_bytes_dictamen = generar_pdf_evaluacion(
+                        candidato_nombre,
+                        candidato_cedula,
+                        cfg_perfil["nombre"],
+                        sucursal_eval,
+                        fecha_eval.strftime("%d/%m/%Y"),
+                        evaluador_nom,
+                        informe_resultado
+                    )
+
+                    st.session_state["pdf_listo"] = True
+                    st.session_state["pdf_bytes"] = pdf_bytes_dictamen
+                    st.session_state["informe_txt"] = informe_resultado
+                    st.success("Dictamen pericial emitido con éxito.")
+
+                except Exception as e_proc:
+                    st.error(f"Error procesando el peritaje: {e_proc}")
 
 # -------------------------------------------------------------
 # HISTORIAL Y GESTIÓN DE EXPEDIENTES

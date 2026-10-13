@@ -60,8 +60,8 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-</style>
-""", unsafe_allow_html=True)
+
+if "authenticated" not in st.session_state:
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -146,12 +146,7 @@ with st.sidebar:
 # NUEVA EVALUACIÓN (PERITAJE DINÁMICO UNIVERSAL CON IA)
 # -------------------------------------------------------------
 if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
-    st.markdown("""
-    <div class="main-header">
-        <h2 style='margin:0;'>Auditoría Pericial Psicotécnica con Inteligencia Artificial</h2>
-        <p style='margin:0; font-size:13px; opacity:0.9;'>Selecciona el perfil, registra las opciones marcadas por el postulante y genera el dictamen oficial DiSys</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="main-header"><h2 style="margin:0;">Auditoría Pericial Psicotécnica con Inteligencia Artificial</h2><p style="margin:0; font-size:13px; opacity:0.9;">Selecciona el perfil, registra las opciones marcadas por el postulante y genera el dictamen oficial DiSys</p></div>', unsafe_allow_html=True)
     
     # 1. Datos y Selección del Perfil
     with st.expander("1. DATOS DEL POSTULANTE Y PERFIL A EVALUAR", expanded=True):

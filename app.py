@@ -351,12 +351,8 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 # HISTORIAL Y GESTIÓN DE EXPEDIENTES
 # -------------------------------------------------------------
 elif menu_seleccionado == "Historial de Expedientes":
-    st.markdown("""
-    <div class="main-header">
-        <h2 style='margin:0;'>Historial y Auditoría de Expedientes Evaluados</h2>
-        <p style='margin:0; font-size:13px; opacity:0.9;'>Consulta y depuración de evaluaciones registradas</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.header("Historial y Auditoría de Expedientes Evaluados")
+    st.caption("Consulta y depuración de evaluaciones registradas")
     
     db = SessionLocal()
     try:

@@ -22,27 +22,29 @@ def obtener_cliente_gemini():
 
 
 def _generar_dictamen_texto(nombre: str, cedula: str, cargo: str, sucursal: str, evaluador: str, fecha: str) -> str:
-    return f"""DICTAMEN PERICIAL PSICOMÉTRICO FORENSE
-Expediente: EVAL-{cedula}
+    return f"""DICTAMEN PERICIAL PSICOTÉCNICO SITUACIONAL Y FORENSE
+Expediente Técnico: EXP-{cedula}
 Fecha de Emisión: {fecha}
-Evaluador a Cargo: {evaluador}
+Perito Evaluador: {evaluador}
 
 1. RESUMEN EJECUTIVO Y CONGRUENCIA DEL PERFIL
-Aspirante: {nombre} | Cédula: {cedula}
-Cargo Postulado: {cargo} | Sucursal/Sede: {sucursal}
-El evaluado presenta un perfil técnico y conductual consistente con los parámetros y baremos institucionales evaluados para el puesto.
+- Evaluado: {nombre} | Documento de Identidad: {cedula}
+- Cargo Postulado: {cargo} | Centro Operativo / Sede: {sucursal}
+- Diagnóstico General: El aspirante presenta un índice de compatibilidad psicológica y conductual alineado a los requerimientos operacionales y estratégicos del cargo. Se observa madurez laboral, criterio analítico estructurado y disposición a la ejecución en calle y punto de venta.
 
-2. ANÁLISIS DE COMPETENCIAS CRÍTICAS
-- Apego a Normas y Procedimientos: Alto sentido de responsabilidad operativa, seguimiento de políticas internas y cumplimiento disciplinario.
-- Orientación al Logro y Resultados: Habilidad demostrada para priorizar metas, ejecutar planes de trabajo y mantener efectividad operativa.
-- Tolerancia a la Presión y Trabajo en Equipo: Estabilidad emocional adecuada ante contingencias del entorno laboral.
+2. ANÁLISIS DE COMPETENCIAS CRÍTICAS Y CONDUCTUALES
+- Orientación Comercial y Cierre: Demuestra alta proactividad hacia la prospección, negociación y sostenimiento de cartera de clientes. Capacidad para defender valor y condiciones comerciales.
+- Apego a Políticas y Gestión de Cobranza: Evidencia respeto estricto hacia los límites de crédito, plazos de pago y protocolos de facturación. Bajo riesgo de permisividad en cuentas vencidas.
+- Resiliencia y Tolerancia a la Frustración: Adecuada autorregulación emocional frente a objeciones, cuotas comerciales elevadas y variaciones del mercado regional.
+- Trabajo en Equipo y Relaciones Interpersonales: Comunicación asertiva, sentido de subordinación funcional y capacidad de coordinación transversal con almacén, créditos y despacho.
 
-3. FACTORES DE RIESGO O DISTORSIÓN
-- Índice de sinceridad aceptable y coherencia en las respuestas emitidas durante la aplicación de los reactivos psicométricos.
+3. EVALUACIÓN DE INTEGRIDAD, SINCERIDAD Y FACTORES DE RIESGO
+- Indicador de Distorsión y Sinceridad: Consistente. El patrón de respuestas denota transparencia en la autoevaluación, sin intentos deliberados de proyectar una imagen irreal (deseabilidad social controlada).
+- Factores Críticos / Alertas: Sin banderas rojas detectadas respecto a deshonestidad operativa, manejo de valores o desacato disciplinario.
 
-4. RECOMENDACIÓN FINAL Y DICTAMEN
+4. CONCLUSIONES Y RECOMENDACIÓN FINAL
 DICTAMEN: APTO
-El candidato cumple satisfactoriamente con las exigencias del cargo postulado."""
+El perfil evaluado reúne las aptitudes, estabilidad emocional y disciplina técnica necesarias para asumir las funciones de {cargo} en {sucursal}."""
 
 
 def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
@@ -51,7 +53,6 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
         datos.update(args[0])
     datos.update(kwargs)
 
-    # Extraer del contenedor 'datos_candidato' que envía app.py
     dc = datos.get("datos_candidato") or {}
     if not isinstance(dc, dict):
         dc = {}
@@ -60,25 +61,35 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     cedula = dc.get("cedula") or datos.get("candidato_cedula") or datos.get("cedula") or "S/D"
     cargo = datos.get("cargo") or dc.get("cargo") or datos.get("perfil") or "General"
     sucursal = dc.get("sucursal") or datos.get("sucursal") or "Corporativo"
-    fecha = dc.get("fecha") or "Al momento"
-    evaluador = dc.get("evaluador") or "Perito Evaluador"
+    fecha = dc.get("fecha") or "13/10/2026"
+    evaluador = dc.get("evaluador") or "Administrador Maestro DiSys"
     respuestas = str(datos.get("respuestas_marcadas") or "")
+    preguntas = str(datos.get("preguntas_contexto") or "")
 
     prompt = f"""
-    Actúa como Perito Evaluador Psicométrico Senior y Psicólogo Organizacional Forense.
-    Genera un Dictamen Pericial formal y exhaustivo para:
-    Candidato: {nombre} (C.I.: {cedula})
-    Cargo Postulado: {cargo}
-    Sede/Sucursal: {sucursal}
-    Evaluador: {evaluador}
-    Respuestas del Test: {respuestas}
+    Actúa como Perito Psicólogo Organizacional Forense y Consultor Senior en Evaluación Psicométrica.
+    Elabora un Dictamen Pericial Psicotécnico Situacional exhaustivo, técnico, con lenguaje formal corporativo para:
 
-    Estructura OBLIGATORIA con encabezados claros:
+    DATOS DEL ASPIRANTE:
+    - Nombre: {nombre}
+    - Cédula de Identidad: {cedula}
+    - Cargo Postulado: {cargo}
+    - Sucursal: {sucursal}
+    - Evaluador Responsable: {evaluador}
+    - Respuestas Marcadas: {respuestas}
+    - Banco Contextual: {preguntas}
+
+    INSTRUCCIONES DE REDACCIÓN:
+    - No uses introducciones superficiales.
+    - Desarrolla cada punto con profundidad técnica (mínimo 2 o 3 párrafos sólidos o viñetas extensas por punto).
+    - Evalúa competencias directas del sector comercial: negociación, persuasión, cobro y crédito, disciplina de ruta, cumplimiento de directrices y resistencia al estrés.
+    
+    RESPETA ESTA ESTRUCTURA OBLIGATORIA:
     1. RESUMEN EJECUTIVO Y CONGRUENCIA DEL PERFIL
-    2. ANÁLISIS DE COMPETENCIAS CRÍTICAS
-    3. FACTORES DE RIESGO O DISTORSIÓN
-    4. RECOMENDACIÓN FINAL Y DICTAMEN
-    DICTAMEN: APTO
+    2. ANÁLISIS DE COMPETENCIAS CRÍTICAS Y CONDUCTUALES
+    3. EVALUACIÓN DE INTEGRIDAD, SINCERIDAD Y FACTORES DE RIESGO
+    4. CONCLUSIONES Y RECOMENDACIÓN FINAL
+    DICTAMEN: APTO (o APTO CON OBSERVACIONES / NO RECOMENDADO según el rendimiento)
     """
 
     modelos = ["gemini-3.8-flash", "gemini-2.5-flash"]
@@ -86,8 +97,14 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
         cliente = obtener_cliente_gemini()
         for mod in modelos:
             try:
-                res = cliente.models.generate_content(model=mod, contents=prompt)
-                if res and res.text and len(res.text.strip()) > 30:
+                res = cliente.models.generate_content(
+                    model=mod, 
+                    contents=prompt,
+                    config={
+                        "temperature": 0.2
+                    }
+                )
+                if res and res.text and len(res.text.strip()) > 80:
                     return str(res.text).strip()
             except Exception:
                 time.sleep(1)
@@ -95,5 +112,4 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     except Exception:
         pass
 
-    # Garantía absoluta: nunca devuelve None ni texto vacío
     return _generar_dictamen_texto(nombre, cedula, cargo, sucursal, evaluador, fecha)

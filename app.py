@@ -38,6 +38,30 @@ st.markdown("""
         height: 50px;
         font-size: 16px !important;
     }
+    # Ocultar botones de GitHub y edición si NO es master
+    user_actual = st.session_state.get("user") or {}
+    rol_user = str(user_actual.get("rol", "")).upper()
+    username_user = str(user_actual.get("username", "")).lower()
+    es_master = (rol_user == "MASTER" or username_user == "master")
+
+    if not es_master:
+        st.markdown("""
+            <style>
+                [data-testid="stToolbar"] {
+                    visibility: hidden !important;
+                    display: none !important;
+                }
+                header[data-testid="stHeader"] {
+                    display: none !important;
+                }
+                .viewerBadge_container__1Qobw,
+                [data-testid="stStatusWidget"],
+                a[href*="github.com"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
 </style>
 """, unsafe_allow_html=True)
 
@@ -65,6 +89,7 @@ def login(username, password):
             else:
                 user.intentos_fallidos += 1
                 db.commit()
+                
         return False
     finally:
         db.close()

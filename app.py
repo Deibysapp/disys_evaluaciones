@@ -263,14 +263,69 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                     cfg_perfil["nombre"]
                 )
 
-                    st.session_state["pdf_listo"] = True
-                    st.session_state["pdf_bytes"] = pdf_bytes_dictamen
-                    st.session_state["informe_txt"] = informe_resultado
-                    st.success("Dictamen pericial emitido con éxito.")
+                   # Persistencia de resultados para la interfaz
+                st.session_state["evaluacion_completada"] = True
+                st.session_state["calificacion"] = calificacion
+                st.session_state["pdf_bytes"] = pdf_bytes_dictamen
+                st.session_state["informe_resultado"] = informe_resultado
+                st.session_state["cedula_eval"] = candidato_cedula
+                st.session_state["cargo_eval"] = cfg_perfil["nombre"]
+                st.success("Dictamen pericial emitido con éxito.")
 
-                except Exception as e_proc:
-                    st.error(f"Error procesando el peritaje: {e_proc}")
+            except Exception as e_proc:
+                st.error(f"Error procesando el peritaje: {e_proc}")
 
+    # =========================================================================
+    # PANEL DE RESUMEN EJECUTIVO Y DESCARGAS
+    # =========================================================================
+    if st.session_state.get("evaluacion_completada"):
+        res = st.session_state["calificacion"]
+        
+        st.markdown("<br/>", unsafe_allow_html=True)
+        st.markdown("### 📊 RESUMEN DE AUDITORÍA PSICOTÉCNICA SITUACIONAL")
+        
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        with col_m1:
+            st.metric("Puntuación Global", f"{res['puntaje_total']}%")
+        with col_m2:
+            st.metric("Fase 1 (Normas y Criterio)", f"{res['puntaje_fase1']}%")
+        with col_m3:
+            st.metric("Fase 2 (Gestión y Presión)", f"{res['puntaje_fase2']}%")
+        with col_m4:
+            st.metric("Control Sinceridad", f"{res['distorsion']}/6 pts")
+
+        if res.get("alerta_roja"):
+            st.error(f"🚨 **{res['detalle_alerta']}**")
+        elif res.get("distorsion", 0) >= 4:
+            st.warning(f"⚠️ **{res['detalle_alerta']}**")
+        else:
+            st.info(f"✅ **{res['detalle_alerta']}**")
+
+        with st.expander("📄 VER DICTAMEN PERICIAL EMITIDO", expanded=True):
+            st.text_area(
+                "Contenido Oficial del Dictamen", 
+                value=st.session_state["informe_resultado"], 
+                height=260, 
+                disabled=True
+            )
+
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            st.download_button(
+                label="📄 DESCARGAR DICTAMEN PERICIAL OFICIAL (PDF)",
+                data=st.session_state["pdf_bytes"],
+                file_name=f"Dictamen_{st.session_state['cedula_eval']}_{st.session_state['cargo_eval'].replace(' ', '_')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        with col_btn2:
+            st.download_button(
+                label="📝 DESCARGAR INFORME (.TXT)",
+                data=st.session_state["informe_resultado"],
+                file_name=f"Informe_{st.session_state['cedula_eval']}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
 # -------------------------------------------------------------
 # HISTORIAL Y GESTIÓN DE EXPEDIENTES
 # -------------------------------------------------------------

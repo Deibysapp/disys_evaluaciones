@@ -199,11 +199,11 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
         else:
             with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
                 try:
-                    # 1. Calificación matemática objetiva contra baremo
+                    # 1. Calificación matemática
                     calificacion = calificar_respuestas_aspirante(
-    perfil_key=cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "",
-    respuestas=respuestas_ingresadas
-)
+                        perfil_key=cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "",
+                        respuestas=respuestas_ingresadas
+                    )
 
                     datos_aspirante = {
                         "nombre": candidato_nombre,
@@ -220,7 +220,7 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                         "detalle_alerta": calificacion["detalle_alerta"]
                     }
 
-                    # 2. Emisión del dictamen pericial
+                    # 2. Dictamen con IA
                     informe_resultado = peritar_evaluacion_con_gemini(
                         cargo=cfg_perfil["nombre"],
                         datos_candidato=datos_aspirante,
@@ -230,7 +230,7 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
                     codigo_exp = f"EXP-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
-                    # 3. Almacenamiento en base de datos
+                    # 3. Guardado en Base de Datos
                     db = SessionLocal()
                     try:
                         nueva_eval = Evaluacion(
@@ -251,33 +251,31 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                         )
                         db.add(nueva_eval)
                         db.commit()
-                    except Exception as e:
+                    except Exception as e_db:
                         db.rollback()
                     finally:
                         db.close()
 
-                    # 4. Generación del documento PDF
+                    # 4. Generación de PDF (3 argumentos)
                     pdf_bytes_dictamen = generar_pdf_dictamen_ia(
-                    datos_aspirante,
-                    informe_resultado,
-                    cfg_perfil["nombre"]
-                )
+                        datos_aspirante,
+                        informe_resultado,
+                        cfg_perfil["nombre"]
+                    )
 
-                   # Persistencia de resultados para la interfaz
-                st.session_state["evaluacion_completada"] = True
-                st.session_state["calificacion"] = calificacion
-                st.session_state["pdf_bytes"] = pdf_bytes_dictamen
-                st.session_state["informe_resultado"] = informe_resultado
-                st.session_state["cedula_eval"] = candidato_cedula
-                st.session_state["cargo_eval"] = cfg_perfil["nombre"]
-                st.success("Dictamen pericial emitido con éxito.")
+                    # 5. Persistencia para la interfaz
+                    st.session_state["evaluacion_completada"] = True
+                    st.session_state["calificacion"] = calificacion
+                    st.session_state["pdf_bytes"] = pdf_bytes_dictamen
+                    st.session_state["informe_resultado"] = informe_resultado
+                    st.session_state["cedula_eval"] = candidato_cedula
+                    st.session_state["cargo_eval"] = cfg_perfil["nombre"]
+                    st.success("Dictamen pericial emitido con éxito.")
 
-            except Exception as e_proc:
-                st.error(f"Error procesando el peritaje: {e_proc}")
+                except Exception as e_proc:
+                    st.error(f"Error procesando el peritaje: {e_proc}")
 
-    # =========================================================================
-    # PANEL DE RESUMEN EJECUTIVO Y DESCARGAS
-    # =========================================================================
+    # Panel de Resumen Ejecutivo y Descargas
     if st.session_state.get("evaluacion_completada"):
         res = st.session_state["calificacion"]
         

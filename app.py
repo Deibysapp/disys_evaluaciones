@@ -62,8 +62,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if "authenticated" not in st.session_state:
-
-if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
     st.session_state.user = None
 

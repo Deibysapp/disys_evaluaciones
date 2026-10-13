@@ -22,7 +22,7 @@ def obtener_cliente_gemini():
 
 def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     """
-    Acepta cualquier combinación de parámetros (diccionario posicional o argumentos nombrados).
+    Dictamen pericial con Gemini 2.5 Flash / 2.0 Flash
     """
     datos = {}
     if args and isinstance(args[0], dict):
@@ -62,7 +62,9 @@ def peritar_evaluacion_con_gemini(*args, **kwargs) -> str:
     """
 
     cliente = obtener_cliente_gemini()
-    modelos = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+    
+    # Modelos oficiales soportados actualmente
+    modelos = ["gemini-2.5-flash", "gemini-2.0-flash"]
     ultimo_error = None
 
     for modelo in modelos:

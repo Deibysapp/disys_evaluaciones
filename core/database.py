@@ -40,6 +40,7 @@ class Usuario(Base):
     rol = Column(String, default="evaluador")
     sucursal = Column(String, default="DIPACA")
     activo = Column(Boolean, default=True)
+    intentos_fallidos = Column(Integer, default=0)
 
 class Evaluacion(Base):
     __tablename__ = "evaluaciones"

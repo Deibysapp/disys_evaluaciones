@@ -291,13 +291,13 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                 except Exception as e_proc:
                     st.error(f"Error procesando el peritaje: {e_proc}")
 
- # Panel de Resumen Ejecutivo y Descargas
- if st.session_state.get("evaluacion_completada"):
+       # Panel de Resumen Ejecutivo y Descargas
+    if st.session_state.get("evaluacion_completada"):
         res = st.session_state["calificacion"]
-        
+
         st.markdown("<br/>", unsafe_allow_html=True)
         st.markdown("### 📊 RESUMEN DE AUDITORÍA PSICOTÉCNICA SITUACIONAL")
-        
+
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         with col_m1:
             st.metric("Puntuación Global", f"{res['puntaje_total']}%")
@@ -317,9 +317,9 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
 
         with st.expander("📄 VER DICTAMEN PERICIAL EMITIDO", expanded=True):
             st.text_area(
-                "Contenido Oficial del Dictamen", 
-                value=st.session_state["informe_resultado"], 
-                height=260, 
+                label="",
+                value=st.session_state["informe_resultado"],
+                height=260,
                 disabled=True
             )
 
@@ -337,16 +337,15 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                 label="📝 DESCARGAR INFORME (.TXT)",
                 data=st.session_state["informe_resultado"],
                 file_name=f"Informe_{st.session_state['cedula_eval']}.txt",
-                mime="text/plain",
                 use_container_width=True
             )
-# -------------------------------------------------------------
+   # -----------------------------------------------------------------------------
 # HISTORIAL Y GESTIÓN DE EXPEDIENTES
-# -------------------------------------------------------------
+# -----------------------------------------------------------------------------
 elif menu_seleccionado == "Historial de Expedientes":
     st.header("Historial y Auditoría de Expedientes Evaluados")
     st.caption("Consulta y depuración de evaluaciones registradas")
-    
+
     db = SessionLocal()
     try:
         # Filtrado por sucursal si no es MASTER
@@ -354,7 +353,6 @@ elif menu_seleccionado == "Historial de Expedientes":
         if st.session_state.user["rol"] != "MASTER":
             query = query.filter(Evaluacion.sucursal == st.session_state.user["sucursal"])
         registros = query.order_by(Evaluacion.fecha_evaluacion.desc()).all()
-        
         if registros:
             # 1. Tabla informativa
             tabla = []

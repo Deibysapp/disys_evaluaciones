@@ -407,8 +407,7 @@ elif menu_seleccionado == "Historial de Expedientes":
 # -------------------------------------------------------------
 elif menu_seleccionado == "Panel Master (Gestión de Usuarios)":
     st.header("Panel Master - Gestión de Usuarios y Accesos")
-        st.header("Panel Master - Gestión de Usuarios y Accesos")
-        st.caption("Creación, asignación de sedes y revocación inmediata de cuentas")
+    st.caption("Creación, asignación de sedes y revocación inmediata de cuentas")
     
     tab_crear, tab_listar = st.tabs(["Crear Evaluador", "Evaluadores Activos y Suspender"])
     

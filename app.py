@@ -406,7 +406,7 @@ elif menu_seleccionado == "Historial de Expedientes":
 # PANEL MASTER
 # -------------------------------------------------------------
 elif menu_seleccionado == "Panel Master (Gestión de Usuarios)":
-        elif menu_seleccionado == "Panel Master (Gestión de Usuarios)":
+    st.header("Panel Master - Gestión de Usuarios y Accesos")
         st.header("Panel Master - Gestión de Usuarios y Accesos")
         st.caption("Creación, asignación de sedes y revocación inmediata de cuentas")
     

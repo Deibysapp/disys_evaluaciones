@@ -6742,26 +6742,73 @@ BANCO_PREGUNTAS = {
     }
     }
 
+def obtener_datos_test(perfil_key: str):
+    """Retorna los datos del instrumento buscando por clave exacta o prefijo."""
+    if not perfil_key:
+        return None
+    if perfil_key in BANCO_PREGUNTAS:
+        return BANCO_PREGUNTAS[perfil_key]
+    pk_clean = str(perfil_key).upper().strip()
+    prefijo = pk_clean.split("_")[0]
+    if prefijo.isdigit():
+        p_num = f"{int(prefijo):02d}_"
+        for k, v in BANCO_PREGUNTAS.items():
+            if k.startswith(p_num) or k.startswith(f"{int(prefijo)}_"):
+                return v
+    for k, v in BANCO_PREGUNTAS.items():
+        if any(palabra in k for palabra in pk_clean.split("_") if len(palabra) > 3):
+            return v
+    return None
+
+# =========================================================================
+# PAUTAS OFICIALES DE CORRECCIÓN SITUACIONAL Y CONTROL DE SINCERIDAD
+# =========================================================================
+
+PAUTAS_CORRECCION = {
+    "01_ADMINISTRADOR_DE_VENTAS": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "D", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "02_ADMINISTRADORA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "A", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "03_ALMACENISTA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "C", 26: "D", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "04_ANALISTA_DE_COBRANZA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "C", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "05_ANALISTA_DE_COMPRAS": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "B", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "06_ANALISTA_DE_CONCILIACION": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "08_ANALISTA_DE_LOGISTICA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "09_ANALISTA_DE_SISTEMA_SADA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "B", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "11_ASESOR_DE_VENTAS": {1: "A", 2: "C", 3: "D", 4: "B", 5: "A", 6: "D", 7: "B", 8: "C", 9: "B", 10: "C", 11: "D", 12: "A", 13: "C", 14: "B", 15: "A", 16: "A", 17: "D", 18: "C", 19: "B", 20: "C", 21: "C", 22: "A", 23: "B", 24: "B", 25: "D", 26: "A", 27: "C", 28: "D", 29: "C", 30: "B"},
+    "14_ASISTENCIA_ADMINISTRATIVA_CONTABLE": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "13_AYUDANTE_ALMACEN_Y_DESPACHO": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "B", 29: "B", 30: "C"},
+    "15_CONTADOR": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "A", 22: "B", 23: "C", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "16_COORDINACION_DE_VENTAS": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "C", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "17_COORDINADOR_ADMINISTRATIVO_DE_AGENCIA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "B", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "18_COORDINADOR_DE_PROCESOS": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "A", 17: "C", 18: "B", 19: "C", 20: "C", 21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "19_COORDINADOR_DE_TALENTO_HUMANO": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "20_COORDINADOR_DE_OPERACIONES": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "21_DESPACHADOR": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "22_MANTENIMIENTO_Y_LIMPIEZA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "23_MERCADERISTA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "24_OPERADOR_DE_MONTACARGAS": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "C", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "25_SUPERVISOR_DE_COBRANZA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "26_SUPERVISOR_DE_LOGISTICA": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "B", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "A", 22: "B", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"},
+    "27_VIGILANTE": {1: "D", 2: "B", 3: "A", 4: "B", 5: "D", 6: "B", 7: "A", 8: "A", 9: "C", 10: "D", 11: "C", 12: "B", 13: "A", 14: "A", 15: "C", 16: "D", 17: "A", 18: "B", 19: "C", 20: "C", 21: "D", 22: "A", 23: "A", 24: "B", 25: "D", 26: "B", 27: "B", 28: "A", 29: "B", 30: "C"}
+}
+
+DISTORSION_KEYS = {
+    "11_ASESOR_DE_VENTAS": {2: "B", 7: "C", 10: "A", 16: "D", 20: "B", 24: "C", 29: "A"},
+    "ESTANDAR": {4: "C", 9: "A", 14: "D", 19: "B", 24: "C", 29: "A"}
+}
+
 def calificar_respuestas_aspirante(perfil_key: str, respuestas: dict):
-    """
-    Evalúa matemáticamente las respuestas marcadas contra la clave oficial.
-    Detecta patrones de azar y calcula la distorsión / deseabilidad social.
-    """
     clave = None
     pk_str = str(perfil_key).upper().strip()
 
-    # A) Búsqueda directa por la llave del diccionario
     if perfil_key in PAUTAS_CORRECCION:
         clave = PAUTAS_CORRECCION[perfil_key]
 
-    # B) Búsqueda por el Código exacto del cargo (Ej: "IPC-T")
     if not clave:
         for k, info in BANCO_PREGUNTAS.items():
             if info.get("codigo", "").upper() == pk_str:
                 clave = PAUTAS_CORRECCION.get(k)
                 break
 
-    # C) Búsqueda segura por nombre completo (sin cruzar palabras sueltas)
     if not clave:
         for k, v in PAUTAS_CORRECCION.items():
             nombre_limpio = k.replace("_", " ")
@@ -6769,7 +6816,6 @@ def calificar_respuestas_aspirante(perfil_key: str, respuestas: dict):
                 clave = v
                 break
 
-    # Fallback: Asegurar que por defecto evalúe Asesor de Ventas si es el principal
     if not clave:
         clave = PAUTAS_CORRECCION.get("11_ASESOR_DE_VENTAS", {})
 
@@ -6781,7 +6827,6 @@ def calificar_respuestas_aspirante(perfil_key: str, respuestas: dict):
     dist_map = DISTORSION_KEYS.get(perfil_key, DISTORSION_KEYS["ESTANDAR"])
     conteos_opcion = {"A": 0, "B": 0, "C": 0, "D": 0}
 
-    # Blindaje extra por si recibe un string desde app.py
     if isinstance(respuestas, str):
         try:
             pares = respuestas.split(",")

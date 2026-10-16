@@ -211,53 +211,20 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
     st.markdown("<br/>", unsafe_allow_html=True)
     if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
         if not candidato_nombre or not candidato_cedula:
-            st.error("Debe ingresar el nombre y la cedula de identidad del aspirante.")
+            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
         else:
             with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
                 try:
                     # 1. Calificación matemática
-                    respuestas_normalizadas = {}
-                    for k, v in respuestas_ingresadas.items():
-                        respuestas_normalizadas[k] = v
-                        respuestas_normalizadas[str(k)] = v
-                        try:
-                            respuestas_normalizadas[int(k)] = v
-                        except Exception:
-                            pass
-
-                    clave_perfil = perfil_seleccionado if "perfil_seleccionado" in locals() else (cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "")
-                    
-                    # Si espera un string, le pasamos la tira o la cadena de opciones; si espera dict, el diccionario
+                    llave_perfil = str(cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "")
                     try:
-                        calificacion = calificar_respuestas_aspirante(
-                            perfil_key=clave_perfil,
-                            respuestas=respuestas_ingresadas
-                        )
+                        # Intenta enviar el diccionario normalizado
+                        calificacion = calificar_respuestas_aspirante(llave_perfil, respuestas_ingresadas)
                     except AttributeError:
-                        # Si da error de .split(), espera el formato texto de la tira
-                        calificacion = calificar_respuestas_aspirante(
-                            perfil_key=clave_perfil,
-                            respuestas=tira_txt if 'tira_txt' in locals() else ", ".join([f"{k}:{v}" for k, v in respuestas_ingresadas.items()])
-                        )
+                        # Si el motor da error ".split()", es porque exige recibir las respuestas como texto
+                        resp_texto = ",".join([str(respuestas_ingresadas[k]) for k in sorted(respuestas_ingresadas.keys())])
+                        calificacion = calificar_respuestas_aspirante(llave_perfil, resp_texto)
 
-                    datos_aspirante = {
-                        "nombre": candidato_nombre,
-                        "cedula": candidato_cedula,
-                        "cargo": cfg_perfil["nombre"],
-                        "sucursal": sucursal_eval,
-                        "fecha": fecha_eval.strftime("%d/%m/%Y"),
-                        "evaluador": evaluador_nom,
-                        "puntaje_fase1": calificacion["puntaje_fase1"],
-                        "puntaje_fase2": calificacion["puntaje_fase2"],
-                        "puntaje_total": calificacion["puntaje_total"],
-                        "distorsion": calificacion["distorsion"],
-                        "alerta_roja": calificacion["alerta_roja"],
-                        "detalle_alerta": calificacion["detalle_alerta"]
-                    }
-
-                    # 2. Emisión con IA y generación de PDF
-                    informe_resultado = peritar_evaluacion_con_gemini(datos_aspirante, calificacion)
-                    pdf_bytes_dictamen = generar_pdf_dictamen_ia(datos_aspirante, calificacion, informe_resultado)
                     datos_aspirante = {
                         "nombre": candidato_nombre,
                         "cedula": candidato_cedula,

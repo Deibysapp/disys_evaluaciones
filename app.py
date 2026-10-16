@@ -226,10 +226,19 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
                             pass
 
                     clave_perfil = perfil_seleccionado if "perfil_seleccionado" in locals() else (cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "")
-                    calificacion = calificar_respuestas_aspirante(
-                        perfil_key=clave_perfil,
-                        respuestas=respuestas_normalizadas
-                    )
+                    
+                    # Si espera un string, le pasamos la tira o la cadena de opciones; si espera dict, el diccionario
+                    try:
+                        calificacion = calificar_respuestas_aspirante(
+                            perfil_key=clave_perfil,
+                            respuestas=respuestas_ingresadas
+                        )
+                    except AttributeError:
+                        # Si da error de .split(), espera el formato texto de la tira
+                        calificacion = calificar_respuestas_aspirante(
+                            perfil_key=clave_perfil,
+                            respuestas=tira_txt if 'tira_txt' in locals() else ", ".join([f"{k}:{v}" for k, v in respuestas_ingresadas.items()])
+                        )
 
                     datos_aspirante = {
                         "nombre": candidato_nombre,

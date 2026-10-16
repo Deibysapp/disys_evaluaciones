@@ -211,16 +211,44 @@ if menu_seleccionado == "Nueva Evaluación (Auditoría Pericial)":
     st.markdown("<br/>", unsafe_allow_html=True)
     if st.button("ANALIZAR EVALUACIÓN Y GENERAR DICTAMEN PERICIAL CON IA", use_container_width=True):
         if not candidato_nombre or not candidato_cedula:
-            st.error("Debe ingresar el nombre y la cédula de identidad del aspirante.")
+            st.error("Debe ingresar el nombre y la cedula de identidad del aspirante.")
         else:
             with st.spinner("Procesando auditoría técnica y redactando informe pericial con IA..."):
                 try:
                     # 1. Calificación matemática
+                    respuestas_normalizadas = {}
+                    for k, v in respuestas_ingresadas.items():
+                        respuestas_normalizadas[k] = v
+                        respuestas_normalizadas[str(k)] = v
+                        try:
+                            respuestas_normalizadas[int(k)] = v
+                        except Exception:
+                            pass
+
+                    clave_perfil = perfil_seleccionado if "perfil_seleccionado" in locals() else (cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "")
                     calificacion = calificar_respuestas_aspirante(
-                        perfil_key=cfg_perfil.get("codigo") or cfg_perfil.get("nombre") or "",
-                        respuestas=respuestas_ingresadas
+                        perfil_key=clave_perfil,
+                        respuestas=respuestas_normalizadas
                     )
 
+                    datos_aspirante = {
+                        "nombre": candidato_nombre,
+                        "cedula": candidato_cedula,
+                        "cargo": cfg_perfil["nombre"],
+                        "sucursal": sucursal_eval,
+                        "fecha": fecha_eval.strftime("%d/%m/%Y"),
+                        "evaluador": evaluador_nom,
+                        "puntaje_fase1": calificacion["puntaje_fase1"],
+                        "puntaje_fase2": calificacion["puntaje_fase2"],
+                        "puntaje_total": calificacion["puntaje_total"],
+                        "distorsion": calificacion["distorsion"],
+                        "alerta_roja": calificacion["alerta_roja"],
+                        "detalle_alerta": calificacion["detalle_alerta"]
+                    }
+
+                    # 2. Emisión con IA y generación de PDF
+                    informe_resultado = peritar_evaluacion_con_gemini(datos_aspirante, calificacion)
+                    pdf_bytes_dictamen = generar_pdf_dictamen_ia(datos_aspirante, calificacion, informe_resultado)
                     datos_aspirante = {
                         "nombre": candidato_nombre,
                         "cedula": candidato_cedula,
